@@ -89,6 +89,8 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $organizations = $stmt->fetchAll();
 
+
+
 // ================ ИСПРАВЛЕННАЯ ЛОГИКА ДЛЯ ГРАФИКОВ ================
 
 // 1. Данные для графика общей динамики
@@ -96,97 +98,138 @@ $years = [];
 $totalOrganizations = [];
 $totalByYear = [];
 
-// Группируем данные по годам
+// ================ ПРАВИЛЬНАЯ ЛОГИКА ДЛЯ ГРАФИКОВ ================
+
+// 1. Предварительные вычисления (ДО всех расчетов!)
+foreach ($organizations as &$org) {
+    $org['sec_sc_sum'] = $org['Secondary_school_sum'] ?? 0;
+}
+unset($org);
+
+// 2. Инициализация структур для хранения данных
+$years = [];
+$dataByYear = [];
+
+// 3. ОДИН проход для всех данных
 foreach ($organizations as $org) {
     $year = $org['Year_period'];
     
-    if (!isset($totalByYear[$year])) {
-        $totalByYear[$year] = 0;
+    if (!isset($dataByYear[$year])) {
+        $dataByYear[$year] = [
+            'total' => 0,
+            'school_types' => [0, 0, 0, 0, 0],  // 5 типов средних школ
+            'pie_data' => [0, 0, 0, 0, 0, 0, 0], // 7 категорий для круговой
+            'nursery' => 0,
+            'basic' => 0,
+            'special' => 0
+        ];
         $years[] = $year;
     }
     
-    // Суммируем Total_organizations для каждого года
-    $totalByYear[$year] += $org['Total_organizations'] ?? 0;
+    // 3.1 ГРАФИК 1: Общая динамика (Total_organizations)
+    $dataByYear[$year]['total'] += $org['Total_organizations'] ?? 0;
+    
+    // 3.2 ГРАФИК 2: Типы средних школ
+    $dataByYear[$year]['school_types'][0] += $org['Secondary_school'] ?? 0;
+    $dataByYear[$year]['school_types'][1] += $org['Secondary_school_special'] ?? 0;
+    $dataByYear[$year]['school_types'][2] += $org['Gymnasium'] ?? 0;
+    $dataByYear[$year]['school_types'][3] += $org['Lyceum'] ?? 0;
+    $dataByYear[$year]['school_types'][4] += $org['Cadet_corps'] ?? 0;
+    
+    // 3.3 ГРАФИК 3: Сравнение по годам
+    $dataByYear[$year]['nursery'] += $org['Nursery_school_primary'] ?? 0;
+    $dataByYear[$year]['basic'] += $org['Basic_school'] ?? 0;
+    $dataByYear[$year]['special'] += $org['Special_needs_schools'] ?? 0;
+    
+    // 3.4 ГРАФИК 4: Круговая диаграмма (ВСЕ типы организаций)
+    $dataByYear[$year]['pie_data'][0] += $org['Nursery_school_primary'] ?? 0;
+    $dataByYear[$year]['pie_data'][1] += $org['Basic_school'] ?? 0;
+    $dataByYear[$year]['pie_data'][2] += $org['sec_sc_sum'] ?? 0;  // ВСЕ средние школы
+    $dataByYear[$year]['pie_data'][3] += $org['Sanatorium_schools'] ?? 0;
+    $dataByYear[$year]['pie_data'][4] += $org['Special_needs_schools'] ?? 0;
+    $dataByYear[$year]['pie_data'][5] += $org['Evening_schools'] ?? 0;
+    $dataByYear[$year]['pie_data'][6] += $org['Branches'] ?? 0;
 }
 
-// Сортируем годы по возрастанию
+// 4. Сортируем годы
 sort($years);
 
-// Формируем массив для графика
-foreach ($years as $year) {
-    $totalOrganizations[] = $totalByYear[$year] ?? 0;
-}
+// 5. Определяем, какие графики показывать (по ВЫБРАННЫМ годам)
+$showYearsCount = count($years);
+$showMultipleYears = $showYearsCount > 1;
+$showSingleYear = $showYearsCount == 1;
 
-// 2. Данные для графика типов школ (для выбранного года)
-$schoolTypesLabels = ['СОШ', 'СОШ с УИОП', 'Гимназии', 'Лицеи', 'Кадетские корпуса'];
-$schoolTypesData = [0, 0, 0, 0, 0];
 
-// Если выбран один год - берем его, иначе берем последний доступный
-if ($show_single_year_charts && !empty($year_ids)) {
-    $selectedYear = $year_ids[0];
+// ИСПРАВЛЕНИЕ 
+$actual_years_count = count($years); // Уникальные годы в полученных данных
+
+// Если пользователь выбрал годы - учитываем это
+if ($selected_years_count > 0) {
+    $show_multiple_years_charts = $selected_years_count > 1;
+    $show_single_year_charts = $selected_years_count == 1;
 } else {
-    $selectedYear = !empty($years) ? end($years) : null;
+    // Если годы не выбраны - смотрим что пришло из БД
+    $show_multiple_years_charts = $actual_years_count > 1;
+    $show_single_year_charts = $actual_years_count == 1;
 }
 
-// Суммируем данные по типам школ для выбранного года
-if ($selectedYear) {
-    foreach ($organizations as $org) {
-        if ($org['Year_period'] == $selectedYear) {
-            $schoolTypesData[0] += $org['Secondary_school'] ?? 0;
-            $schoolTypesData[1] += $org['Secondary_school_special'] ?? 0;
-            $schoolTypesData[2] += $org['Gymnasium'] ?? 0;
-            $schoolTypesData[3] += $org['Lyceum'] ?? 0;
-            $schoolTypesData[4] += $org['Cadet_corps'] ?? 0;
-        }
-    }
-}
+echo "<!-- === ИНФОРМАЦИЯ О ГРАФИКАХ === -->";
+echo "<!-- Выбрано лет пользователем: $selected_years_count -->";
+echo "<!-- Фактически лет в данных: $actual_years_count -->";
+echo "<!-- Показывать несколько лет: " . ($show_multiple_years_charts ? 'да' : 'нет') . " -->";
+echo "<!-- Показывать один год: " . ($show_single_year_charts ? 'да' : 'нет') . " -->";
+echo "<!-- === КОНЕЦ ИНФОРМАЦИИ === -->";
 
-// 3. Данные для сравнения по годам (группируем по годам)
-$nurseryData = [];
-$basicData = [];
-$specialData = [];
 
+
+// ============ КОНЕЦ ИСПРАВЛЕНИЯ ============
+
+// 6. Формируем массивы для графиков
+$totalOrganizations = []; // График 1
+$nurseryData = [];        // График 3
+$basicData = [];          // График 3
+$specialData = [];        // График 3
+$schoolTypesData = [0, 0, 0, 0, 0]; // График 2 (сумма за ВСЕ выбранные годы)
+$pieData = [0, 0, 0, 0, 0, 0, 0];   // График 4 (сумма за ВСЕ выбранные годы)
+
+// 6.1 Графики 1 и 3: данные по годам
 foreach ($years as $year) {
-    $yearNursery = 0;
-    $yearBasic = 0;
-    $yearSpecial = 0;
-    
-    foreach ($organizations as $org) {
-        if ($org['Year_period'] == $year) {
-            $yearNursery += $org['Nursery_school_primary'] ?? 0;
-            $yearBasic += $org['Basic_school'] ?? 0;
-            $yearSpecial += $org['Special_needs_schools'] ?? 0;
-        }
-    }
-    
-    $nurseryData[] = $yearNursery;
-    $basicData[] = $yearBasic;
-    $specialData[] = $yearSpecial;
+    $totalOrganizations[] = $dataByYear[$year]['total'] ?? 0;
+    $nurseryData[] = $dataByYear[$year]['nursery'] ?? 0;
+    $basicData[] = $dataByYear[$year]['basic'] ?? 0;
+    $specialData[] = $dataByYear[$year]['special'] ?? 0;
 }
 
-// 4. Данные для круговой диаграммы (для выбранного года)
+// 6.2 Графики 2 и 4: СУММА за ВСЕ выбранные годы (как таблица)
+foreach ($dataByYear as $yearData) {
+    $schoolTypesData[0] += $yearData['school_types'][0] ?? 0;
+    $schoolTypesData[1] += $yearData['school_types'][1] ?? 0;
+    $schoolTypesData[2] += $yearData['school_types'][2] ?? 0;
+    $schoolTypesData[3] += $yearData['school_types'][3] ?? 0;
+    $schoolTypesData[4] += $yearData['school_types'][4] ?? 0;
+    
+    $pieData[0] += $yearData['pie_data'][0] ?? 0;
+    $pieData[1] += $yearData['pie_data'][1] ?? 0;
+    $pieData[2] += $yearData['pie_data'][2] ?? 0;
+    $pieData[3] += $yearData['pie_data'][3] ?? 0;
+    $pieData[4] += $yearData['pie_data'][4] ?? 0;
+    $pieData[5] += $yearData['pie_data'][5] ?? 0;
+    $pieData[6] += $yearData['pie_data'][6] ?? 0;
+}
+
+// 7. Метки (оставляем как есть)
+$schoolTypesLabels = ['СОШ', 'СОШ с УИОП', 'Гимназии', 'Лицеи', 'Кадетские корпуса'];
 $pieLabels = ['НОШ д/сад', 'Основные школы', 'Средние школы', 'Санаторные', 'ОВЗ школы', 'Вечерние', 'Филиалы'];
-$pieData = [0, 0, 0, 0, 0, 0, 0];
 
-if ($selectedYear) {
-    foreach ($organizations as $org) {
-        if ($org['Year_period'] == $selectedYear) {
-            $pieData[0] += $org['Nursery_school_primary'] ?? 0;
-            $pieData[1] += $org['Basic_school'] ?? 0;
-            $pieData[2] += $org['sec_sc_sum'] ?? 0; // Все СОШ
-            $pieData[3] += $org['Sanatorium_schools'] ?? 0;
-            $pieData[4] += $org['Special_needs_schools'] ?? 0;
-            $pieData[5] += $org['Evening_schools'] ?? 0;
-            $pieData[6] += $org['Branches'] ?? 0;
-        }
-    }
-}
 
-// Передаем данные в JavaScript
+
+
+// 8. Передаем в JavaScript
 echo "<script>";
 echo "window.nurseryData = " . json_encode($nurseryData) . ";";
 echo "window.basicData = " . json_encode($basicData) . ";";
 echo "window.specialData = " . json_encode($specialData) . ";";
+echo "window.showMultipleYears = " . ($showMultipleYears ? 'true' : 'false') . ";";
 echo "</script>";
 
 // Получаем время обновления
@@ -226,6 +269,7 @@ foreach ($organizations as &$org) {
     }
 }
 unset($org);
+
 ?>
 
 
@@ -430,7 +474,7 @@ unset($org);
                
                 <div class="buttons">
                     <button type="submit" class="btn-primary">Применить фильтры</button>
-                    <button type="button" class="btn-secondary" onclick="window.location.href='index2.php'">Сбросить</button>  <!-- ЗАМЕНИТЬ ПРИ СМЕНЕ ИМЕНИ ФАЙЛА -->
+                    <button type="button" class="btn-secondary" onclick="window.location.href='index.php'">Сбросить</button>  <!-- ЗАМЕНИТЬ ПРИ СМЕНЕ ИМЕНИ ФАЙЛА -->
                 </div>
             </form>
         </div>
@@ -439,8 +483,6 @@ unset($org);
 
 
 	    <!-- НАЧАЛО СТАТИСТИКИ -->
-<!-- Первая карточка (полная ширина) -->
-<!-- Первая карточка (полная ширина) -->
 <div class="stat-card" style="width: 99%;">
     <h3>Общеобразовательных организаций - всего</h3>
     <div class="stat-value" style="display: inline-block;">
@@ -519,171 +561,47 @@ unset($org);
             </div>
         </div>
     </div>
-</div> <!-- Закрываем cardsView -->
+</div> 
 
-<?php
-// ========== ОТЛАДКА ДАННЫХ ГРАФИКОВ ==========
-echo "<!-- ======= ОТЛАДКА ГРАФИКОВ ======= -->";
-echo "<!-- Всего записей в \$organizations: " . count($organizations) . " -->";
 
-if (!empty($organizations)) {
-    echo "<!-- Первая запись: " . htmlspecialchars(json_encode($organizations[0])) . " -->";
-    echo "<!-- Последняя запись: " . htmlspecialchars(json_encode(end($organizations))) . " -->";
-    
-    // Покажем уникальные годы
-    $uniqueYears = array_unique(array_column($organizations, 'Year_period'));
-    sort($uniqueYears);
-    echo "<!-- Уникальные годы: " . implode(', ', $uniqueYears) . " -->";
-    
-    // Проверим сумму Total_organizations
-    $totalSum = 0;
-    foreach ($organizations as $org) {
-        $totalSum += $org['Total_organizations'] ?? 0;
-    }
-    echo "<!-- Общая сумма Total_organizations: " . $totalSum . " -->";
-}
-
-// Проверим данные для графиков
-echo "<!-- Данные для графика 1 (линия): -->";
-echo "<!-- Годы: " . htmlspecialchars(json_encode($years)) . " -->";
-echo "<!-- Значения: " . htmlspecialchars(json_encode($totalOrganizations)) . " -->";
-
-echo "<!-- Данные для графика 2 (столбцы): -->";
-echo "<!-- Метки: " . htmlspecialchars(json_encode($schoolTypesLabels)) . " -->";
-echo "<!-- Значения: " . htmlspecialchars(json_encode($schoolTypesData)) . " -->";
-
-echo "<!-- ======= КОНЕЦ ОТЛАДКИ ======= -->";
-?>
 
 <!-- ГРАФИКИ -->
 <div class="chart-container">
-    <?php if ($show_multiple_years_charts): ?>
-        <!-- Если выбрано более одного года -->
-        <div class="chart-box">
-            <div class="chart-header">
-                <h3>Общее количество организаций по годам</h3>
-                <div class="chart-controls">
-                    <button class="chart-btn" title="Скачать график" onclick="downloadChart('totalChart')">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <canvas id="totalChart"></canvas>
+    <!-- ВСЕГДА показываем эти графики -->
+    <div class="chart-box">
+        <div class="chart-header">
+            <h3>Общее количество организаций <?= count($years) > 1 ? 'по годам' : "($years[0])" ?></h3>
         </div>
-        
-        <div class="chart-box">
-            <div class="chart-header">
-                <h3>Сравнение основных типов организаций</h3>
-                <div class="chart-controls">
-                    <button class="chart-btn" title="Скачать график" onclick="downloadChart('comparisonChart')">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <canvas id="comparisonChart"></canvas>
+        <canvas id="totalChart"></canvas>
+    </div>
+    
+    <div class="chart-box">
+        <div class="chart-header">
+            <h3>Среднеобразовательные организации <?= $show_single_year_charts ? "($years[0])" : '(суммарно)' ?></h3>
         </div>
-        
-    <?php elseif ($show_single_year_charts): ?>
-        <!-- Если выбран ровно один год -->
-        <div class="chart-box">
-            <div class="chart-header">
-                <h3>Среднеобразовательные организации (<?= safeEcho(end($organizations)['Year_period'] ?? '') ?>)</h3>
-                <div class="chart-controls">
-                    <button class="chart-btn" title="Скачать график" onclick="downloadChart('schoolTypesChart')">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <canvas id="schoolTypesChart"></canvas>
+        <canvas id="schoolTypesChart"></canvas>
+    </div>
+    
+    <div class="chart-box">
+        <div class="chart-header">
+            <h3>Структура по типам <?= $show_single_year_charts ? "($years[0])" : '(суммарно)' ?></h3>
         </div>
-        
-        <div class="chart-box">
-            <div class="chart-header">
-                <h3>Структура по типам (<?= safeEcho(end($organizations)['Year_period'] ?? '') ?>)</h3>
-                <div class="chart-controls">
-                    <button class="chart-btn" title="Скачать график" onclick="downloadChart('pieChart')">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <canvas id="pieChart"></canvas>
+        <canvas id="pieChart"></canvas>
+    </div>
+    
+    <!-- График сравнения показываем ТОЛЬКО если есть данные за несколько лет -->
+    <?php if (count($years) > 1): ?>
+    <div class="chart-box">
+        <div class="chart-header">
+            <h3>Сравнение основных типов по годам</h3>
         </div>
-        
-    <?php else: ?>
-        <!-- Если не выбрано ни одного года -->
-        <div class="chart-box">
-            <div class="chart-header">
-                <h3>Общее количество организаций по годам</h3>
-                <div class="chart-controls">
-                    <button class="chart-btn" title="Скачать график" onclick="downloadChart('totalChart')">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <canvas id="totalChart"></canvas>
-        </div>
-        
-        <div class="chart-box">
-            <div class="chart-header">
-                <h3>Среднеобразовательные организации</h3>
-                <div class="chart-controls">
-                    <button class="chart-btn" title="Скачать график" onclick="downloadChart('schoolTypesChart')">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <canvas id="schoolTypesChart"></canvas>
-        </div>
-
-        <div class="chart-box">
-            <div class="chart-header">
-                <h3>Сравнение основных типов организаций</h3>
-                <div class="chart-controls">
-                    <button class="chart-btn" title="Скачать график" onclick="downloadChart('comparisonChart')">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <canvas id="comparisonChart"></canvas>
-        </div>
-        
-        <div class="chart-box">
-            <div class="chart-header">
-                <h3>Структура по типам</h3>
-                <div class="chart-controls">
-                    <button class="chart-btn" title="Скачать график" onclick="downloadChart('pieChart')">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <canvas id="pieChart"></canvas>
-        </div>
+        <canvas id="comparisonChart"></canvas>
+    </div>
     <?php endif; ?>
 </div>
+
+<!---------------------------------------------------->
+
 
 
 <!-- Таблица -->
