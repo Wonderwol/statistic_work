@@ -52,9 +52,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (shouldCloseAll) {
             Object.keys(filtersConfig).forEach(filterName => {
                 const group = document.getElementById(filtersConfig[filterName].groupId);
-                group.classList.remove('active');
+                const container = document.getElementById(filtersConfig[filterName].containerId);
+                const fg = container ? container.closest('.filter-group') : null;
+
+                if (group) group.classList.remove('active');
+                if (container) container.classList.remove('active');
+                if (fg) fg.classList.remove('dropdown-open');
             });
         }
+
     });
     
     // Инициализация фильтра
@@ -78,17 +84,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // Показать/скрыть список при клике
         searchInput.addEventListener('click', function(e) {
             e.stopPropagation();
-            
-            // Закрыть другие открытые списки
+
+            // Закрыть другие открытые списки + убрать им "верхний слой"
             Object.keys(filtersConfig).forEach(otherFilter => {
                 if (otherFilter !== filterName) {
                     const otherGroup = document.getElementById(filtersConfig[otherFilter].groupId);
-                    otherGroup.classList.remove('active');
+                    const otherContainer = document.getElementById(filtersConfig[otherFilter].containerId);
+                    const otherFilterGroup = otherContainer ? otherContainer.closest('.filter-group') : null;
+
+                    if (otherGroup) otherGroup.classList.remove('active');
+                    if (otherContainer) otherContainer.classList.remove('active');
+                    if (otherFilterGroup) otherFilterGroup.classList.remove('dropdown-open');
                 }
             });
-            
-            // Переключить текущий
-            checkboxGroup.classList.toggle('active');
+
+            // Открыть/закрыть текущий
+            const willOpen = !checkboxGroup.classList.contains('active');
+            checkboxGroup.classList.toggle('active', willOpen);
+
+            if (container) container.classList.toggle('active', willOpen);
+
+            const fg = container ? container.closest('.filter-group') : null;
+            if (fg) fg.classList.toggle('dropdown-open', willOpen);
         });
         
         // Поиск
@@ -174,9 +191,11 @@ document.addEventListener('DOMContentLoaded', function() {
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 if (config.isRadio && this.checked) {
-                    // Закрыть dropdown после выбора радиокнопки
                     setTimeout(() => {
                         checkboxGroup.classList.remove('active');
+                        if (container) container.classList.remove('active');
+                        const fg = container ? container.closest('.filter-group') : null;
+                        if (fg) fg.classList.remove('dropdown-open');
                     }, 300);
                 }
                 updateFilterState();
@@ -539,4 +558,404 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300); // Минимальная задержка
     });
 });
+
+/* index_script.php — красивые графики Chart.js (BI style) */
+
+(function () {
+  'use strict';
+
+  // ---------- helpers ----------
+  const nf = new Intl.NumberFormat('ru-RU');
+
+  function num(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function sum(arr) {
+    return (arr || []).reduce((a, b) => a + num(b), 0);
+  }
+
+  function safeArr(a) {
+    return Array.isArray(a) ? a : [];
+  }
+
+  function getCssVar(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  // Ненавязчивая современная палитра (стабильная и читаемая)
+  const PALETTE = [
+    'rgba(54, 162, 235, 0.75)',
+    'rgba(255, 99, 132, 0.70)',
+    'rgba(255, 206, 86, 0.75)',
+    'rgba(75, 192, 192, 0.75)',
+    'rgba(153, 102, 255, 0.75)',
+    'rgba(255, 159, 64, 0.75)',
+    'rgba(46, 204, 113, 0.70)',
+    'rgba(149, 165, 166, 0.65)',
+    'rgba(52, 73, 94, 0.60)',
+  ];
+
+  const PALETTE_BORDER = [
+    'rgb(54, 162, 235)',
+    'rgb(255, 99, 132)',
+    'rgb(255, 206, 86)',
+    'rgb(75, 192, 192)',
+    'rgb(153, 102, 255)',
+    'rgb(255, 159, 64)',
+    'rgb(46, 204, 113)',
+    'rgb(149, 165, 166)',
+    'rgb(52, 73, 94)',
+  ];
+
+  function colors(n) {
+    const bg = [];
+    const br = [];
+    for (let i = 0; i < n; i++) {
+      bg.push(PALETTE[i % PALETTE.length]);
+      br.push(PALETTE_BORDER[i % PALETTE_BORDER.length]);
+    }
+    return { bg, br };
+  }
+
+  function buildLegendLabelsWithPercent(chart) {
+    const data = chart.data;
+    const ds = data.datasets[0];
+    const total = (ds.data || []).reduce((a, b) => a + num(b), 0) || 1;
+
+    const meta = chart.getDatasetMeta(0);
+
+    return (data.labels || []).map((label, i) => {
+      const v = num(ds.data[i]);
+      const p = (v / total) * 100;
+      const style = meta.controller.getStyle(i);
+
+      return {
+        text: `${label}: ${nf.format(v)} (${p.toFixed(1)}%)`,
+        fillStyle: style.backgroundColor,
+        strokeStyle: style.borderColor,
+        lineWidth: style.borderWidth,
+        hidden: !chart.getDataVisibility(i),
+        index: i,
+      };
+    });
+  }
+
+  // ---------- Chart.js global defaults ----------
+  if (window.Chart) {
+    Chart.defaults.font.family = 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    Chart.defaults.font.size = 12;
+    Chart.defaults.color = 'rgba(44, 62, 80, 0.85)';
+    Chart.defaults.animation.duration = 900;
+    Chart.defaults.animation.easing = 'easeOutQuart';
+    Chart.defaults.interaction.mode = 'index';
+    Chart.defaults.interaction.intersect = false;
+    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(44,62,80,0.95)';
+    Chart.defaults.plugins.tooltip.titleColor = '#fff';
+    Chart.defaults.plugins.tooltip.bodyColor = '#fff';
+    Chart.defaults.plugins.tooltip.padding = 12;
+    Chart.defaults.plugins.tooltip.displayColors = true;
+  }
+
+  // ---------- plugins ----------
+  const centerTextPlugin = {
+    id: 'centerTextPlugin',
+    afterDraw(chart, args, opts) {
+      const { ctx, chartArea } = chart;
+      if (!chartArea) return;
+
+      const cx = (chartArea.left + chartArea.right) / 2;
+      const cy = (chartArea.top + chartArea.bottom) / 2;
+
+      const lines = safeArr(opts && opts.lines);
+      if (!lines.length) return;
+
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      let y = cy - (lines.length - 1) * 10;
+      for (const line of lines) {
+        ctx.font = line.font || '700 18px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+        ctx.fillStyle = line.color || 'rgba(44, 62, 80, 0.9)';
+        ctx.fillText(line.text || '', cx, y);
+        y += line.step || 20;
+      }
+
+      ctx.restore();
+    }
+  };
+
+  // ---------- create charts ----------
+  function makeLineChart() {
+    const el = document.getElementById('totalChart');
+    if (!el) return;
+
+    const years = safeArr(window.years);
+    const data = safeArr(window.totalOrganizations).map(num);
+
+    const ctx = el.getContext('2d');
+
+    const accent = getCssVar('--bs-primary', 'rgb(54, 162, 235)');
+    const fill = 'rgba(54, 162, 235, 0.15)';
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: years,
+        datasets: [{
+          label: 'Итого организаций',
+          data,
+          tension: 0.35,
+          borderWidth: 2,
+          borderColor: accent,
+          backgroundColor: fill,
+          fill: true,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label(ctx) {
+                return ` ${ctx.dataset.label}: ${nf.format(num(ctx.parsed.y))}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { maxRotation: 0, autoSkip: true }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.06)' },
+            ticks: {
+              callback: (v) => nf.format(v)
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function makeSchoolTypesBar() {
+    const el = document.getElementById('schoolTypesChart');
+    if (!el) return;
+
+    const labels = safeArr(window.schoolTypesLabels);
+    const values = safeArr(window.schoolTypesData).map(num);
+
+    const ctx = el.getContext('2d');
+    const { bg, br } = colors(labels.length);
+
+    // Скрываем нулевые категории (чтобы кадетские корпуса не “занимали место”, если 0)
+    const filtered = labels.map((l, i) => ({ l, v: values[i] }))
+      .filter(x => num(x.v) > 0);
+
+    const fl = filtered.map(x => x.l);
+    const fv = filtered.map(x => x.v);
+    const { bg: fbg, br: fbr } = colors(fl.length);
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: fl,
+        datasets: [{
+          label: 'Количество',
+          data: fv,
+          backgroundColor: fbg,
+          borderColor: fbr,
+          borderWidth: 1.5,
+          borderRadius: 10,
+          maxBarThickness: 46
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label(ctx) {
+                return ` ${ctx.label}: ${nf.format(num(ctx.parsed.y))}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { autoSkip: false }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.06)' },
+            ticks: { callback: (v) => nf.format(v) }
+          }
+        }
+      }
+    });
+  }
+
+  function makeCompareBar() {
+    const el = document.getElementById('compareChart');
+    if (!el) return;
+
+    const years = safeArr(window.years);
+    const nursery = safeArr(window.nurseryData).map(num);
+    const basic = safeArr(window.basicData).map(num);
+    const special = safeArr(window.specialData).map(num);
+
+    const ctx = el.getContext('2d');
+
+    const datasets = [
+      { label: 'НОШ д/сад', data: nursery, colorIndex: 0 },
+      { label: 'Основные школы', data: basic, colorIndex: 3 },
+      { label: 'ОВЗ школы', data: special, colorIndex: 5 },
+    ];
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: years,
+        datasets: datasets.map(ds => ({
+          label: ds.label,
+          data: ds.data,
+          backgroundColor: PALETTE[ds.colorIndex % PALETTE.length],
+          borderColor: PALETTE_BORDER[ds.colorIndex % PALETTE_BORDER.length],
+          borderWidth: 1.5,
+          borderRadius: 8,
+          maxBarThickness: 26
+        }))
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 10 }
+          },
+          tooltip: {
+            callbacks: {
+              label(ctx) {
+                return ` ${ctx.dataset.label}: ${nf.format(num(ctx.parsed.y))}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.06)' },
+            ticks: { callback: (v) => nf.format(v) }
+          }
+        }
+      }
+    });
+  }
+
+  function makeStructureDoughnut() {
+    const el = document.getElementById('pieChart');
+    if (!el) return;
+
+    const labels = safeArr(window.pieLabels);
+    const values = safeArr(window.pieData).map(num);
+
+    const ctx = el.getContext('2d');
+    const { bg, br } = colors(labels.length);
+
+    // Итого без филиалов (по методике источника)
+    const idxBranches = labels.findIndex(x => String(x).toLowerCase().includes('филиал'));
+    const branches = idxBranches >= 0 ? num(values[idxBranches]) : 0;
+    const totalAll = sum(values);
+    const totalWithoutBranches = totalAll - branches;
+
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: bg,
+          borderColor: br,
+          borderWidth: 2,
+          borderRadius: 10,
+          spacing: 4,
+          hoverOffset: 10,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              usePointStyle: true,
+              pointStyle: 'circle',
+              boxWidth: 10,
+              padding: 14,
+              generateLabels: buildLegendLabelsWithPercent
+            },
+            onClick(e, item, legend) {
+              legend.chart.toggleDataVisibility(item.index);
+              legend.chart.update();
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label(ctx) {
+                const v = num(ctx.parsed);
+                const total = sum(ctx.dataset.data) || 1;
+                const p = (v / total) * 100;
+                return ` ${ctx.label}: ${nf.format(v)} (${p.toFixed(1)}%)`;
+              }
+            }
+          },
+          centerTextPlugin: {
+            lines: [
+              { text: `Итого: ${nf.format(totalWithoutBranches)}`, font: '800 18px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial', color: 'rgba(44,62,80,0.95)', step: 22 },
+              { text: 'без филиалов', font: '600 12px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial', color: 'rgba(44,62,80,0.70)', step: 18 },
+              ...(branches > 0 ? [{ text: `филиалы: ${nf.format(branches)} (всего: ${nf.format(totalAll)})`, font: '500 11px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial', color: 'rgba(44,62,80,0.60)', step: 18 }] : [])
+            ]
+          }
+        }
+      },
+      plugins: [centerTextPlugin]
+    });
+  }
+
+  function initAll() {
+    if (!window.Chart) return;
+
+    // Если у тебя есть кнопки/перерисовка — лучше хранить инстансы и destroy(),
+    // но для первичной красивой версии достаточно разового init.
+    makeLineChart();
+    makeSchoolTypesBar();
+    makeCompareBar();
+    makeStructureDoughnut();
+  }
+
+  // Запуск
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+  } else {
+    initAll();
+  }
+
+})();
+
 </script>

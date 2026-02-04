@@ -27,6 +27,8 @@ body {
     background-color: var(--light-gray);
     color: var(--dark-gray);
     line-height: 1.6;
+    margin-left: 20%;
+    margin-right: 20%;
 }
 
 /* Основная структура */
@@ -981,7 +983,7 @@ tbody tr:hover {
 @keyframes fadeInUp {
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: none; /* важно: убираем stacking context после анимации */
     }
 }
 
@@ -1422,5 +1424,15 @@ tbody tr:hover {
         padding: 8px 10px;
         font-size: 13px;
     }
+}
+
+/* Открытый фильтр должен быть выше соседей */
+.filter-group.dropdown-open{
+    z-index: 5000;
+}
+
+/* Сам список ещё выше */
+.dropdown-checkbox-group{
+    z-index: 6000;
 }
 </style>

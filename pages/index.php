@@ -26,37 +26,26 @@ $locality_types_data = $pdo->query("select Area_type_code as id, Area_type_name 
 $sql = "SELECT 
     da.Area_name,
     ao.Year_period,
-    -- Основные типы организаций
+
     SUM(CASE WHEN do.Organization_type_code = 1 THEN ao.Area_organizations_count ELSE 0 END) AS Nursery_school_primary,
     SUM(CASE WHEN do.Organization_type_code = 2 THEN ao.Area_organizations_count ELSE 0 END) AS Primary_school,
     SUM(CASE WHEN do.Organization_type_code = 3 THEN ao.Area_organizations_count ELSE 0 END) AS Basic_school,
-    
-    -- Средние школы (суммарно - тип 4)
-    SUM(CASE WHEN do.Organization_type_code = 4 THEN ao.Area_organizations_count ELSE 0 END) AS Secondary_school_sum,
-    
-    -- Средние школы (отдельные типы 5-9)
+    SUM(CASE WHEN do.Organization_type_code BETWEEN 5 AND 9 THEN ao.Area_organizations_count ELSE 0 END) AS Secondary_school_sum,
     SUM(CASE WHEN do.Organization_type_code = 5 THEN ao.Area_organizations_count ELSE 0 END) AS Secondary_school,
     SUM(CASE WHEN do.Organization_type_code = 6 THEN ao.Area_organizations_count ELSE 0 END) AS Secondary_school_special,
     SUM(CASE WHEN do.Organization_type_code = 7 THEN ao.Area_organizations_count ELSE 0 END) AS Gymnasium,
     SUM(CASE WHEN do.Organization_type_code = 8 THEN ao.Area_organizations_count ELSE 0 END) AS Lyceum,
     SUM(CASE WHEN do.Organization_type_code = 9 THEN ao.Area_organizations_count ELSE 0 END) AS Cadet_corps,
-    
-    -- Другие типы
     SUM(CASE WHEN do.Organization_type_code = 10 THEN ao.Area_organizations_count ELSE 0 END) AS Branches,
     SUM(CASE WHEN do.Organization_type_code = 11 THEN ao.Area_organizations_count ELSE 0 END) AS Sanatorium_schools,
     SUM(CASE WHEN do.Organization_type_code = 12 THEN ao.Area_organizations_count ELSE 0 END) AS Special_needs_schools,
     SUM(CASE WHEN do.Organization_type_code = 13 THEN ao.Area_organizations_count ELSE 0 END) AS Evening_schools,
-    
-    -- ИТОГО (тип 14)
-    SUM(CASE WHEN do.Organization_type_code = 14 THEN ao.Area_organizations_count ELSE 0 END) AS Total_organizations
-    FROM Area_organizations ao
-    JOIN dat_Area da ON ao.Area_code = da.Area_code
-    JOIN dat_Organizations do ON ao.Organization_type_code = do.Organization_type_code
-    WHERE ao.deleted = 0";
+    SUM(CASE WHEN do.Organization_type_code IN (1,2,3,5,6,7,8,9,11,12,13) THEN ao.Area_organizations_count ELSE 0 END) AS Total_organizations
 
-
-
-
+FROM Area_organizations ao
+JOIN dat_Area da ON ao.Area_code = da.Area_code
+JOIN dat_Organizations do ON ao.Organization_type_code = do.Organization_type_code
+WHERE ao.deleted = 0";
 
 $params = [];
 
@@ -88,149 +77,177 @@ $sql .= " GROUP BY da.Area_name, ao.Year_period
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $organizations = $stmt->fetchAll();
+// === DEBUG_FINAL: методология "Итого по НСО" (ОДИН финальный дебаг) ===
+/*try {
+    $debugSql = "
+        SELECT 
+            ao.Year_period,
 
+            -- Базовые суммы
+            SUM(CASE WHEN ao.Organization_type_code = 1 THEN ao.Area_organizations_count ELSE 0 END) AS t1,
+            SUM(CASE WHEN ao.Organization_type_code = 2 THEN ao.Area_organizations_count ELSE 0 END) AS t2,
+            SUM(CASE WHEN ao.Organization_type_code = 3 THEN ao.Area_organizations_count ELSE 0 END) AS t3,
 
+            -- Средние школы
+            SUM(CASE WHEN ao.Organization_type_code = 4 THEN ao.Area_organizations_count ELSE 0 END) AS t4,
+            SUM(CASE WHEN ao.Organization_type_code BETWEEN 5 AND 9 THEN ao.Area_organizations_count ELSE 0 END) AS t59,
 
-// ================ ИСПРАВЛЕННАЯ ЛОГИКА ДЛЯ ГРАФИКОВ ================
+            -- Прочие
+            SUM(CASE WHEN ao.Organization_type_code = 10 THEN ao.Area_organizations_count ELSE 0 END) AS t10,
+            SUM(CASE WHEN ao.Organization_type_code = 11 THEN ao.Area_organizations_count ELSE 0 END) AS t11,
+            SUM(CASE WHEN ao.Organization_type_code = 12 THEN ao.Area_organizations_count ELSE 0 END) AS t12,
+            SUM(CASE WHEN ao.Organization_type_code = 13 THEN ao.Area_organizations_count ELSE 0 END) AS t13,
 
-// 1. Данные для графика общей динамики
-$years = [];
-$totalOrganizations = [];
-$totalByYear = [];
+            -- ИТОГО из источника
+            SUM(CASE WHEN ao.Organization_type_code = 14 THEN ao.Area_organizations_count ELSE 0 END) AS t14,
 
+            -- Контрольные суммы
+            SUM(CASE WHEN ao.Organization_type_code IN (1,2,3,4,10,11,12,13) THEN ao.Area_organizations_count ELSE 0 END) AS sum_1234_10_13,
+            SUM(CASE WHEN ao.Organization_type_code IN (1,2,3,5,6,7,8,9,10,11,12,13) THEN ao.Area_organizations_count ELSE 0 END) AS sum_123_59_10_13
+
+        FROM Area_organizations ao
+        JOIN dat_Area da ON ao.Area_code = da.Area_code
+        WHERE ao.deleted = 0
+          AND da.Area_name = N'Итого по НСО'
+          AND ao.Area_type_code = 3
+        GROUP BY ao.Year_period
+        ORDER BY ao.Year_period;
+    ";
+
+    $dbg = $pdo->query($debugSql)->fetchAll(PDO::FETCH_ASSOC);
+
+    echo "\n<!-- DEBUG_FINAL_BEGIN\n";
+    echo json_encode($dbg, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    echo "\nDEBUG_FINAL_END -->\n";
+
+} catch (Throwable $e) {
+    echo "\n<!-- DEBUG_FINAL_ERROR " . htmlspecialchars($e->getMessage(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . " -->\n";
+}
+*/
 // ================ ПРАВИЛЬНАЯ ЛОГИКА ДЛЯ ГРАФИКОВ ================
+// ================ ПРАВИЛЬНАЯ ЛОГИКА ДЛЯ ГРАФИКОВ (ГОТОВО) ================
 
-// 1. Предварительные вычисления (ДО всех расчетов!)
+// 0) Нормализуем поля (до всех расчетов)
 foreach ($organizations as &$org) {
-    $org['sec_sc_sum'] = $org['Secondary_school_sum'] ?? 0;
+    $org['sec_sc_sum'] = (int)($org['Secondary_school_sum'] ?? 0);
+    $org['Total_organizations'] = (int)($org['Total_organizations'] ?? 0);
+    $org['Nursery_school_primary'] = (int)($org['Nursery_school_primary'] ?? 0);
+    $org['Primary_school'] = (int)($org['Primary_school'] ?? 0);
+    $org['Basic_school'] = (int)($org['Basic_school'] ?? 0);
+    $org['Sanatorium_schools'] = (int)($org['Sanatorium_schools'] ?? 0);
+    $org['Special_needs_schools'] = (int)($org['Special_needs_schools'] ?? 0);
+    $org['Evening_schools'] = (int)($org['Evening_schools'] ?? 0);
+    $org['Branches'] = (int)($org['Branches'] ?? 0);
+
+    $org['Secondary_school'] = (int)($org['Secondary_school'] ?? 0);
+    $org['Secondary_school_special'] = (int)($org['Secondary_school_special'] ?? 0);
+    $org['Gymnasium'] = (int)($org['Gymnasium'] ?? 0);
+    $org['Lyceum'] = (int)($org['Lyceum'] ?? 0);
+    $org['Cadet_corps'] = (int)($org['Cadet_corps'] ?? 0);
 }
 unset($org);
 
-// 2. Инициализация структур для хранения данных
+// 1) Инициализация структур
 $years = [];
 $dataByYear = [];
 
-// 3. ОДИН проход для всех данных
+/**
+ * pie_data (8 категорий):
+ * 0 НОШ д/сад (1)
+ * 1 НОШ (2)
+ * 2 Основные (3)
+ * 3 Средние (5-9)
+ * 4 Санаторные (11)
+ * 5 ОВЗ (12)
+ * 6 Вечерние (13)
+ * 7 Филиалы (10)
+ */
 foreach ($organizations as $org) {
     $year = $org['Year_period'];
-    
+
     if (!isset($dataByYear[$year])) {
         $dataByYear[$year] = [
-            'total' => 0,
-            'school_types' => [0, 0, 0, 0, 0],  // 5 типов средних школ
-            'pie_data' => [0, 0, 0, 0, 0, 0, 0], // 7 категорий для круговой
-            'nursery' => 0,
-            'basic' => 0,
-            'special' => 0
+            'total' => 0,                       // График 1
+            'school_types' => [0, 0, 0, 0, 0],  // График 2
+            'nursery' => 0,                     // График 3
+            'basic' => 0,                       // График 3
+            'special' => 0,                     // График 3
+            'pie_data' => [0,0,0,0,0,0,0,0],    // График 4 (структура)
         ];
         $years[] = $year;
     }
-    
-    // 3.1 ГРАФИК 1: Общая динамика (Total_organizations)
-    $dataByYear[$year]['total'] += $org['Total_organizations'] ?? 0;
-    
-    // 3.2 ГРАФИК 2: Типы средних школ
-    $dataByYear[$year]['school_types'][0] += $org['Secondary_school'] ?? 0;
-    $dataByYear[$year]['school_types'][1] += $org['Secondary_school_special'] ?? 0;
-    $dataByYear[$year]['school_types'][2] += $org['Gymnasium'] ?? 0;
-    $dataByYear[$year]['school_types'][3] += $org['Lyceum'] ?? 0;
-    $dataByYear[$year]['school_types'][4] += $org['Cadet_corps'] ?? 0;
-    
-    // 3.3 ГРАФИК 3: Сравнение по годам
-    $dataByYear[$year]['nursery'] += $org['Nursery_school_primary'] ?? 0;
-    $dataByYear[$year]['basic'] += $org['Basic_school'] ?? 0;
-    $dataByYear[$year]['special'] += $org['Special_needs_schools'] ?? 0;
-    
-    // 3.4 ГРАФИК 4: Круговая диаграмма (ВСЕ типы организаций)
-    $dataByYear[$year]['pie_data'][0] += $org['Nursery_school_primary'] ?? 0;
-    $dataByYear[$year]['pie_data'][1] += $org['Basic_school'] ?? 0;
-    $dataByYear[$year]['pie_data'][2] += $org['sec_sc_sum'] ?? 0;  // ВСЕ средние школы
-    $dataByYear[$year]['pie_data'][3] += $org['Sanatorium_schools'] ?? 0;
-    $dataByYear[$year]['pie_data'][4] += $org['Special_needs_schools'] ?? 0;
-    $dataByYear[$year]['pie_data'][5] += $org['Evening_schools'] ?? 0;
-    $dataByYear[$year]['pie_data'][6] += $org['Branches'] ?? 0;
+
+    // График 1: Общая динамика (итого БЕЗ филиалов уже заложено в SQL Total_organizations)
+    $dataByYear[$year]['total'] += $org['Total_organizations'];
+
+    // График 2: Подтипы средних школ (5-9)
+    $dataByYear[$year]['school_types'][0] += $org['Secondary_school'];          // 5
+    $dataByYear[$year]['school_types'][1] += $org['Secondary_school_special'];  // 6
+    $dataByYear[$year]['school_types'][2] += $org['Gymnasium'];                 // 7
+    $dataByYear[$year]['school_types'][3] += $org['Lyceum'];                    // 8
+    $dataByYear[$year]['school_types'][4] += $org['Cadet_corps'];               // 9
+
+    // График 3: Сравнение (пример 3 категорий)
+    $dataByYear[$year]['nursery'] += $org['Nursery_school_primary'];
+    $dataByYear[$year]['basic']   += $org['Basic_school'];
+    $dataByYear[$year]['special'] += $org['Special_needs_schools'];
+
+    // График 4: Структура по типам (ВСЁ, включая филиалы отдельным сектором)
+    $dataByYear[$year]['pie_data'][0] += $org['Nursery_school_primary'];
+    $dataByYear[$year]['pie_data'][1] += $org['Primary_school'];
+    $dataByYear[$year]['pie_data'][2] += $org['Basic_school'];
+    $dataByYear[$year]['pie_data'][3] += $org['sec_sc_sum'];
+    $dataByYear[$year]['pie_data'][4] += $org['Sanatorium_schools'];
+    $dataByYear[$year]['pie_data'][5] += $org['Special_needs_schools'];
+    $dataByYear[$year]['pie_data'][6] += $org['Evening_schools'];
+    $dataByYear[$year]['pie_data'][7] += $org['Branches'];
 }
 
-// 4. Сортируем годы
+// 2) Сортируем годы
 sort($years);
 
-// 5. Определяем, какие графики показывать (по ВЫБРАННЫМ годам)
-$showYearsCount = count($years);
-$showMultipleYears = $showYearsCount > 1;
-$showSingleYear = $showYearsCount == 1;
+// 3) Массивы для графиков
+$totalOrganizations = [];
+$nurseryData = [];
+$basicData = [];
+$specialData = [];
 
+$schoolTypesData = [0,0,0,0,0]; // сумма по всем выбранным годам
+$pieData = [0,0,0,0,0,0,0,0];   // сумма по всем выбранным годам
 
-// ИСПРАВЛЕНИЕ 
-$actual_years_count = count($years); // Уникальные годы в полученных данных
-
-// Если пользователь выбрал годы - учитываем это
-if ($selected_years_count > 0) {
-    $show_multiple_years_charts = $selected_years_count > 1;
-    $show_single_year_charts = $selected_years_count == 1;
-} else {
-    // Если годы не выбраны - смотрим что пришло из БД
-    $show_multiple_years_charts = $actual_years_count > 1;
-    $show_single_year_charts = $actual_years_count == 1;
-}
-
-echo "<!-- === ИНФОРМАЦИЯ О ГРАФИКАХ === -->";
-echo "<!-- Выбрано лет пользователем: $selected_years_count -->";
-echo "<!-- Фактически лет в данных: $actual_years_count -->";
-echo "<!-- Показывать несколько лет: " . ($show_multiple_years_charts ? 'да' : 'нет') . " -->";
-echo "<!-- Показывать один год: " . ($show_single_year_charts ? 'да' : 'нет') . " -->";
-echo "<!-- === КОНЕЦ ИНФОРМАЦИИ === -->";
-
-
-
-// ============ КОНЕЦ ИСПРАВЛЕНИЯ ============
-
-// 6. Формируем массивы для графиков
-$totalOrganizations = []; // График 1
-$nurseryData = [];        // График 3
-$basicData = [];          // График 3
-$specialData = [];        // График 3
-$schoolTypesData = [0, 0, 0, 0, 0]; // График 2 (сумма за ВСЕ выбранные годы)
-$pieData = [0, 0, 0, 0, 0, 0, 0];   // График 4 (сумма за ВСЕ выбранные годы)
-
-// 6.1 Графики 1 и 3: данные по годам
 foreach ($years as $year) {
-    $totalOrganizations[] = $dataByYear[$year]['total'] ?? 0;
-    $nurseryData[] = $dataByYear[$year]['nursery'] ?? 0;
-    $basicData[] = $dataByYear[$year]['basic'] ?? 0;
-    $specialData[] = $dataByYear[$year]['special'] ?? 0;
+    $totalOrganizations[] = $dataByYear[$year]['total'];
+    $nurseryData[] = $dataByYear[$year]['nursery'];
+    $basicData[] = $dataByYear[$year]['basic'];
+    $specialData[] = $dataByYear[$year]['special'];
 }
 
-// 6.2 Графики 2 и 4: СУММА за ВСЕ выбранные годы (как таблица)
 foreach ($dataByYear as $yearData) {
-    $schoolTypesData[0] += $yearData['school_types'][0] ?? 0;
-    $schoolTypesData[1] += $yearData['school_types'][1] ?? 0;
-    $schoolTypesData[2] += $yearData['school_types'][2] ?? 0;
-    $schoolTypesData[3] += $yearData['school_types'][3] ?? 0;
-    $schoolTypesData[4] += $yearData['school_types'][4] ?? 0;
-    
-    $pieData[0] += $yearData['pie_data'][0] ?? 0;
-    $pieData[1] += $yearData['pie_data'][1] ?? 0;
-    $pieData[2] += $yearData['pie_data'][2] ?? 0;
-    $pieData[3] += $yearData['pie_data'][3] ?? 0;
-    $pieData[4] += $yearData['pie_data'][4] ?? 0;
-    $pieData[5] += $yearData['pie_data'][5] ?? 0;
-    $pieData[6] += $yearData['pie_data'][6] ?? 0;
+    for ($i = 0; $i < 5; $i++) {
+        $schoolTypesData[$i] += $yearData['school_types'][$i];
+    }
+    for ($i = 0; $i < 8; $i++) {
+        $pieData[$i] += $yearData['pie_data'][$i];
+    }
 }
 
-// 7. Метки (оставляем как есть)
+// 4) Метки (строго соответствуют индексам массивов)
 $schoolTypesLabels = ['СОШ', 'СОШ с УИОП', 'Гимназии', 'Лицеи', 'Кадетские корпуса'];
-$pieLabels = ['НОШ д/сад', 'Основные школы', 'Средние школы', 'Санаторные', 'ОВЗ школы', 'Вечерние', 'Филиалы'];
+$pieLabels = ['НОШ д/сад', 'НОШ', 'Основные школы', 'Средние школы', 'Санаторные', 'ОВЗ школы', 'Вечерние', 'Филиалы'];
 
-
-
-
-// 8. Передаем в JavaScript
+// 5) Передача в JS (если нужно через window.* — оставляй как у тебя)
 echo "<script>";
+echo "window.years = " . json_encode($years, JSON_UNESCAPED_UNICODE) . ";";
+echo "window.totalOrganizations = " . json_encode($totalOrganizations) . ";";
 echo "window.nurseryData = " . json_encode($nurseryData) . ";";
 echo "window.basicData = " . json_encode($basicData) . ";";
 echo "window.specialData = " . json_encode($specialData) . ";";
-echo "window.showMultipleYears = " . ($showMultipleYears ? 'true' : 'false') . ";";
+echo "window.schoolTypesLabels = " . json_encode($schoolTypesLabels, JSON_UNESCAPED_UNICODE) . ";";
+echo "window.schoolTypesData = " . json_encode($schoolTypesData) . ";";
+echo "window.pieLabels = " . json_encode($pieLabels, JSON_UNESCAPED_UNICODE) . ";";
+echo "window.pieData = " . json_encode($pieData) . ";";
 echo "</script>";
+
 
 // Получаем время обновления
 try {
@@ -246,34 +263,12 @@ try {
 // Дополнительные расчеты для организаций
 foreach ($organizations as &$org) {
     $org['sec_sc_sum'] = $org['Secondary_school_sum'] ?? 0;
-    
-    $org['total_oo'] = ($org['Nursery_school_primary'] ?? 0) +
-                       ($org['Primary_school'] ?? 0) +
-                       ($org['Basic_school'] ?? 0) +
-                       ($org['Secondary_school_sum'] ?? 0) +
-                       ($org['Branches'] ?? 0);
-    
-    $org['total_day_oo'] = $org['total_oo'] +
-                           ($org['Sanatorium_schools'] ?? 0) +
-                           ($org['Special_needs_schools'] ?? 0);
 }
+
 unset($org);
 
-// Корректировка расхождений
-foreach ($organizations as &$org) {
-    $calculated_total = $org['total_day_oo'] + ($org['Evening_schools'] ?? 0);
-    $db_total = $org['Total_organizations'] ?? 0;
-    
-    if ($calculated_total != $db_total) {
-        $org['total_day_oo'] = $db_total - ($org['Evening_schools'] ?? 0);
-    }
-}
-unset($org);
 
 ?>
-
-
-
 
 <!-- HTML -->
 <!DOCTYPE html>
@@ -288,36 +283,21 @@ unset($org);
     <link rel="icon" type="image/png" sizes="16x16" href="\v3\src\img\favicon16x16.png"> <!-- Иконка вкладки браузера -->
 </head>
 <body>
-    <div id="preloader" style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: white;
-        z-index: 9999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    ">
+    <div id="preloader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white;
+                               z-index: 9999; display: flex; justify-content: center; align-items: center;">
         <div style="text-align: center;">
-            <div style="
-                width: 50px;
-                height: 50px;
-                border: 3px solid #f3f3f3;
-                border-top: 3px solid #6d444b;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 20px;
-            "></div>
+            <div style="width: 50px; height: 50px; border: 3px solid #f3f3f3; border-top: 3px solid #6d444b;
+                        border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
             <p>Загрузка данных...</p>
         </div>
     </div>
+    
+
     <?php include '../header/header.php'; ?>  
-    <?php include '../nav/nav_left.php'; ?> 
+    <?php include '../nav/nav_left.php'; ?>
      
         <!-- Основной контент -->
-        <div class="content-area">
+    <div class="content-area">
 
      <!-- Хлебные крошки -->
     <div style="margin: 0 0 10px 0; padding: 5px 0; font-size: 13px; color: rgba(0, 0, 0, 0.6);">
@@ -563,8 +543,6 @@ unset($org);
     </div>
 </div> 
 
-
-
 <!-- ГРАФИКИ -->
 <div class="chart-container">
     <!-- ВСЕГДА показываем эти графики -->
@@ -600,12 +578,7 @@ unset($org);
     <?php endif; ?>
 </div>
 
-<!---------------------------------------------------->
-
-
-
 <!-- Таблица -->
-
 <div class="results" id="tableView" style="margin-top: 20px; display: none;">
     <table>
         <thead>
@@ -680,7 +653,6 @@ unset($org);
             <tr style="background-color: #6d444b; color: white; font-weight: bold;">
                 <td style="font-weight: bold; padding-left: 9%;">итого ОО</td>
                 <?php foreach ($organizations as $org): ?>
-                <td style="text-align: center;"><?= safeEcho($org['total_oo'] ?? 0) ?></td>
                 <?php endforeach; ?>
             </tr>
             <tr>
@@ -698,7 +670,6 @@ unset($org);
             <tr style="background-color: #6d444b; color: white; font-weight: bold;">
                 <td style="font-weight: bold; padding-left: 9%;">итого дневные ОО</td>
                 <?php foreach ($organizations as $org): ?>
-                <td style="text-align: center;"><?= safeEcho($org['total_day_oo'] ?? 0) ?></td>
                 <?php endforeach; ?>
             </tr>
             <tr>
@@ -717,7 +688,6 @@ unset($org);
     </table>
 </div>
 
-
         <?php else: ?>
             <div class="no-results">
                 <h2>📝 Организации не найдены</h2>
@@ -727,6 +697,25 @@ unset($org);
         
 
     </div>
+    <script>
+    (function () {
+    function hidePreloader() {
+        const preloader = document.getElementById('preloader');
+        if (!preloader) return;
+
+        preloader.style.transition = 'opacity 0.3s';
+        preloader.style.opacity = '0';
+
+        setTimeout(() => {
+            preloader.style.pointerEvents = 'none';
+            preloader.style.display = 'none';
+        }, 320);
+    }
+
+    window.addEventListener('load', () => setTimeout(hidePreloader, 200));
+    document.addEventListener('DOMContentLoaded', () => setTimeout(hidePreloader, 2000)); // подстраховка
+    })();
+    </script>
     
     <?php include '../scripts/index_script.php'; ?>
 
@@ -734,5 +723,6 @@ unset($org);
     </div>
     <?php include '../footer/footer.php'; ?>
     <?php include '../styles/style_index.php'; ?>
+    <?php include '../styles/style_header.php'; ?>
 </body>
 </html>
