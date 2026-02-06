@@ -9,7 +9,7 @@
 #header {
     width: 100%;
     height: 255px;
-    background-image: url('../src/img/header_bg.jpg');
+    background-image: url('/v3/src/img/header_bg.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -194,6 +194,4 @@
     color: #6d444b;
     font-weight: 700;
 }
-
-
 </style>

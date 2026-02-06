@@ -1,7 +1,7 @@
 <div id="header">
     <!-- Логотип -->
     <a class="logo" href="http://nimro.ru" title="Новосибирский Институт Мониторинга и Развития Образования">
-        <img alt="НИМРО" src="../src/img/logo_with_title_horizontal.png">
+        <img alt="НИМРО" src="\v3\src\img\logo_with_title_horizontal.png">
     </a>
 
     <!-- Основное меню -->
@@ -26,7 +26,7 @@
             <li><a href="/map/">Карта сайта</a></li>
             <li><a href="/noko/info">НОКО</a></li>
             <li><a href="/nimro_innovations/">РИП</a></li>
-            <li><a href="../pages/index.php">Статистические данные</a></li>
+            <li><a href="../pages/open_network/index.php">Статистические данные</a></li>
         </ul>
     </div>
 </div>

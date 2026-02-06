@@ -13,7 +13,6 @@
     --shadow: 0 2px 10px rgba(0,0,0,0.1);
     --border-radius: 8px;
     --transition: all 0.3s ease;
-    --  
 }
 
 * {
@@ -24,7 +23,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--light-gray);
+    background-color: #ffffff;
     color: var(--dark-gray);
     line-height: 1.6;
     margin-left: 20%;
@@ -415,9 +414,9 @@ h1 {
 /* Статистические карточки */
 .statistics {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
 }
 
 .stat-card {
@@ -429,6 +428,7 @@ h1 {
     flex-direction: column;
     transition: var(--transition);
     border-top: 4px solid var(--primary-color);
+    align-items: center;     /* по горизонтали */
 }
 
 .stat-card:hover {
@@ -449,23 +449,22 @@ h1 {
     font-weight: 700;
     color: var(--primary-color);
     margin-top: auto;
+
 }
 
-/* Графики */
+/* График */
 .chart-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 30px;
-    margin-top: 30px;
+  width: 100%;
+  min-height: 520px;   /* увеличь/уменьши по вкусу */
+  height: 520px;
+  margin-top: 12px;
 }
 
-.chart-box {
-    background-color: var(--white);
-    padding: 25px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    display: flex;
-    flex-direction: column;
+/* canvas всегда занимает контейнер */
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
 }
 
 .chart-box h3 {
@@ -475,9 +474,13 @@ h1 {
     font-weight: 600;
 }
 
+/* Canvas занимает всё доступное место */
 .chart-box canvas {
     flex: 1;
-    max-height: 300px;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;  /* критично: убираем лимит 300px */
+    display: block;
 }
 
 /* Таблица */
@@ -585,6 +588,7 @@ tbody tr:hover {
         flex-direction: column;
         gap: 20px;
     }
+}
     
     .left-navigation {
         width: 100%;
@@ -605,10 +609,6 @@ tbody tr:hover {
         grid-template-columns: 1fr;
     }
     
-    .chart-box {
-        min-width: 100%;
-    }
-}
 
 @media (max-width: 768px) {
     .main-wrapper {
@@ -634,11 +634,7 @@ tbody tr:hover {
     }
     
     .statistics {
-        grid-template-columns: 1fr;
-    }
-    
-    .chart-box {
-        padding: 15px;
+    grid-template-columns: 1fr;
     }
     
     .header-content {
@@ -724,10 +720,6 @@ tbody tr:hover {
         margin-bottom: 15px;
     }
     
-    .chart-box {
-        min-width: 100% !important;
-        height: 300px;
-    }
     
     .filter-row {
         flex-direction: column !important;
@@ -1251,15 +1243,9 @@ tbody tr:hover {
 /* === СТИЛИ ДЛЯ ГРАФИКОВ === */
 
 .chart-box {
-    background-color: var(--white);
-    padding: 25px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    display: flex;
-    flex-direction: column;
-    height: 400px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    min-height: 620px;      /* регулируй: 560–750 */
 }
+
 
 .chart-box:hover {
     transform: translateY(-5px);
@@ -1315,11 +1301,6 @@ tbody tr:hover {
     height: 16px;
 }
 
-.chart-box canvas {
-    flex: 1;
-    width: 100% !important;
-    height: calc(100% - 60px) !important;
-}
 
 /* Адаптивность графиков */
 @media (max-width: 1200px) {
@@ -1435,4 +1416,182 @@ tbody tr:hover {
 .dropdown-checkbox-group{
     z-index: 6000;
 }
+
+.chart-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 20px;
+    margin-top: 18px;
+}
+
+.chart-box {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    padding: 16px 16px 10px 16px;
+    min-height: 360px;
+    position: relative;
+}
+
+.chart-header h3 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+
+
+/* Ряд карточек: две в строку */
+.statistics{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: stretch;
+}
+
+/* Карточка: ровно половина строки (с учетом gap) */
+.statistics .stat-card{
+  box-sizing: border-box;
+  flex: 0 0 calc(50% - 6px);
+  max-width: calc(50% - 6px);
+  min-width: 320px; /* можно 280-360 по вкусу */
+}
+
+/* На узких экранах — одна в строку */
+@media (max-width: 900px){
+  .statistics .stat-card{
+    flex: 0 0 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+  .chart-box{
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+  padding: 16px 16px 10px 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.chart-header h3{
+  margin: 0 0 10px 0;
+  font-weight: 700;
+  font-size: 15px;
+  color: #2c3e50;
+}
+
+
+
+/* Узкий и высокий stacked-график структуры */
+#pieChart{
+    height: 520px !important;   /* ДЛИННЫЙ */
+    max-height: 520px;
+}
+
+.chart-header--with-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.chart-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.chart-btn{
+  appearance:none;
+  border:1px solid rgba(15,23,42,.14);
+  background:#fff;
+  border-radius:10px;
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:700;
+  color:rgba(15,23,42,.78);
+  cursor:pointer;
+  transition:transform .12s ease, background .12s ease, border-color .12s ease;
+}
+.chart-btn:hover{ transform:translateY(-1px); background:rgba(2,6,23,.02); border-color:rgba(15,23,42,.22); }
+.chart-btn:active{ transform:translateY(0); }
+
+.chart-wrap{
+  position:relative;
+  width:100%;
+  min-height:320px;
+}
+
+.chart-tooltip{
+  position:absolute;
+  pointer-events:none;
+  transform:translate(-50%, -110%);
+  min-width:160px;
+  max-width:260px;
+  padding:10px;
+  border-radius:12px;
+  background:rgba(15,23,42,.92);
+  color:#fff;
+  box-shadow:0 18px 50px rgba(2,6,23,.35);
+  opacity:0;
+  transition:opacity .08s ease;
+  z-index:5;
+  font-size:12px;
+  line-height:1.25;
+}
+.chart-tooltip.is-visible{ opacity:1; }
+
+.chart-box.is-fullscreen{
+  position:fixed;
+  inset:12px;
+  z-index:9999;
+  margin:0;
+  background:#fff;
+  border-radius:16px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+}
+.chart-box.is-fullscreen .chart-wrap{ flex:1; min-height:0; }
+
+
+/* Дать графику больше места: фиксируем высоту контейнера */
+.chart-wrap.chart-wrap--big {
+  position: relative;
+  height: 560px;              /* увеличивай: 520/600/700 */
+  width: 100%;
+}
+
+/* Canvas занимает весь контейнер */
+.chart-wrap.chart-wrap--big > canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Убрать hover у блока, где находится график */
+.no-hover:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  background: inherit !important;
+}
+
+/* Если hover повешен на карточку/контейнер выше уровнем — гасим и его */
+.chart-container:hover,
+.chart-container .card:hover,
+.chart-container .chart-card:hover,
+.chart-container .chart-box:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+#pieChart {
+  max-height: none !important;
+}
+
 </style>
