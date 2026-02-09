@@ -48,28 +48,29 @@
   };
 
   document.addEventListener('DOMContentLoaded', function () {
-    // Preloader (перенесено из index.php)
-    (function () {
-      function hidePreloader() {
-        const preloader = document.getElementById('preloader');
-        if (!preloader) return;
+    Object.keys(filtersConfig).forEach(name => initFilter(name, filtersConfig[name]));
 
-        preloader.style.transition = 'opacity 0.3s';
-        preloader.style.opacity = '0';
+    // Закрытие дропдаунов по клику вне
+    document.addEventListener('click', function (event) {
+      let shouldCloseAll = true;
 
-        setTimeout(() => {
-          preloader.style.pointerEvents = 'none';
-          preloader.style.display = 'none';
-        }, 320);
+      Object.keys(filtersConfig).forEach(name => {
+        const container = document.getElementById(filtersConfig[name].containerId);
+        if (container && container.contains(event.target)) shouldCloseAll = false;
+      });
+
+      if (shouldCloseAll) {
+        Object.keys(filtersConfig).forEach(name => {
+          const group = document.getElementById(filtersConfig[name].groupId);
+          const container = document.getElementById(filtersConfig[name].containerId);
+          const fg = container ? container.closest('.filter-group') : null;
+
+          if (group) group.classList.remove('active');
+          if (container) container.classList.remove('active');
+          if (fg) fg.classList.remove('dropdown-open');
+        });
       }
-
-      // Быстрое скрытие + подстраховка
-      setTimeout(hidePreloader, 200);
-      setTimeout(hidePreloader, 2000);
-
-      // Если load ещё не был — тоже сработает
-      window.addEventListener('load', () => setTimeout(hidePreloader, 200));
-    })();
+    });
 
     const savedView = localStorage.getItem('nimro_open_view') || 'cards';
     if (savedView === 'table') showTable();

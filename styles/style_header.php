@@ -26,8 +26,8 @@
 
 #header .logo {
     position: absolute;
-    left: 63px;          /* было 40px — сдвигаем левее */
-    top: 45.5%;            /* было 50% — опускаем ниже */
+    left: 63px;
+    top: 45.5%;
 
     transform: translateY(-50%);
     display: flex;

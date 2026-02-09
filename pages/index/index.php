@@ -1,241 +1,10 @@
 <?php
+// Абсолютный путь к конфигу
+declare(strict_types=1);
 
-require_once '../../config/config.php'; // Jтносительный путь
-
-// Получаем параметры фильтрации как массивы
-$org_types = $_GET['org_type'] ?? [];
-$year_ids = $_GET['year_id'] ?? [];
-$locality_types = $_GET['locality_type'] ?? [];
-
-// Преобразуем в массивы, если пришло одиночное значение
-if (!is_array($org_types) && !empty($org_types)) $org_types = [$org_types];
-if (!is_array($year_ids) && !empty($year_ids)) $year_ids = [$year_ids];
-if (!is_array($locality_types) && !empty($locality_types)) $locality_types = [$locality_types];
-
-// Определяем сколько лет выбрано
-$selected_years_count = count($year_ids);
-$show_single_year_charts = $selected_years_count == 1;
-
-// Получаем списки для фильтров
-$years_data = $pdo->query("SELECT DISTINCT Year_period as id, Year_period as name FROM Area_organizations WHERE deleted = 0 ORDER BY Year_period")->fetchAll();
-$org_types_data = $pdo->query("select Area_code as id, Area_name as name from dat_Area")->fetchAll();
-$locality_types_data = $pdo->query("select Area_type_code as id, Area_type_name as name from dat_Area_types")->fetchAll();
-
-// ОСНОВНОЙ ЗАПРОС с правильными кодами
-$sql = "SELECT 
-    da.Area_name,
-    ao.Year_period,
-
-    SUM(CASE WHEN ao.Organization_type_code = 1 THEN ao.Area_organizations_count ELSE 0 END) AS Nursery_school_primary,
-    SUM(CASE WHEN ao.Organization_type_code = 2 THEN ao.Area_organizations_count ELSE 0 END) AS Primary_school,
-    SUM(CASE WHEN ao.Organization_type_code = 3 THEN ao.Area_organizations_count ELSE 0 END) AS Basic_school,
-
-    SUM(CASE WHEN ao.Organization_type_code BETWEEN 5 AND 9 THEN ao.Area_organizations_count ELSE 0 END) AS Secondary_school_sum,
-    SUM(CASE WHEN ao.Organization_type_code = 5 THEN ao.Area_organizations_count ELSE 0 END) AS Secondary_school,
-    SUM(CASE WHEN ao.Organization_type_code = 6 THEN ao.Area_organizations_count ELSE 0 END) AS Secondary_school_special,
-    SUM(CASE WHEN ao.Organization_type_code = 7 THEN ao.Area_organizations_count ELSE 0 END) AS Gymnasium,
-    SUM(CASE WHEN ao.Organization_type_code = 8 THEN ao.Area_organizations_count ELSE 0 END) AS Lyceum,
-    SUM(CASE WHEN ao.Organization_type_code = 9 THEN ao.Area_organizations_count ELSE 0 END) AS Cadet_corps,
-
-    SUM(CASE WHEN ao.Organization_type_code = 10 THEN ao.Area_organizations_count ELSE 0 END) AS Branches,
-    SUM(CASE WHEN ao.Organization_type_code = 11 THEN ao.Area_organizations_count ELSE 0 END) AS Sanatorium_schools,
-    SUM(CASE WHEN ao.Organization_type_code = 12 THEN ao.Area_organizations_count ELSE 0 END) AS Special_needs_schools,
-    SUM(CASE WHEN ao.Organization_type_code = 13 THEN ao.Area_organizations_count ELSE 0 END) AS Evening_schools,
-
-    SUM(CASE WHEN ao.Organization_type_code IN (1,2,3,5,6,7,8,9,11,12,13) THEN ao.Area_organizations_count ELSE 0 END) AS Total_organizations
-
-FROM Area_organizations ao
-JOIN dat_Area da ON ao.Area_code = da.Area_code
-WHERE ao.deleted = 0";
-
-$params = [];
-
-if (empty($locality_types)) {
-    //тип местности не выбран - показываем Всего (код 3)
-    $sql .= " AND ao.Area_type_code = 3";
-} 
-
-else {
-    // Если выбран - фильтруем по выбранному
-    $placeholders = str_repeat('?,', count($locality_types) - 1) . '?';
-    $sql .= " AND ao.Area_type_code IN ($placeholders)";
-    $params = array_merge($params, $locality_types);
-}
-
-if (!empty($org_types)) {
-    $placeholders = str_repeat('?,', count($org_types) - 1) . '?';
-    $sql .= " AND ao.Area_code IN ($placeholders)";
-    $params = array_merge($params, $org_types);
-}
-
-if (!empty($year_ids)) {
-    $placeholders = str_repeat('?,', count($year_ids) - 1) . '?';
-    $sql .= " AND ao.Year_period IN ($placeholders)";
-    $params = array_merge($params, $year_ids);
-}
-
-$sql .= " GROUP BY da.Area_name, ao.Year_period
-          ORDER BY da.Area_name, ao.Year_period";
-
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$organizations = $stmt->fetchAll();
-
-// 0) Нормализуем поля (до всех расчетов)
-foreach ($organizations as &$org) {
-    $org['sec_sc_sum'] = (int)($org['Secondary_school_sum'] ?? 0);
-    $org['Total_organizations'] = (int)($org['Total_organizations'] ?? 0);
-    $org['Nursery_school_primary'] = (int)($org['Nursery_school_primary'] ?? 0);
-    $org['Primary_school'] = (int)($org['Primary_school'] ?? 0);
-    $org['Basic_school'] = (int)($org['Basic_school'] ?? 0);
-    $org['Sanatorium_schools'] = (int)($org['Sanatorium_schools'] ?? 0);
-    $org['Special_needs_schools'] = (int)($org['Special_needs_schools'] ?? 0);
-    $org['Evening_schools'] = (int)($org['Evening_schools'] ?? 0);
-    $org['Branches'] = (int)($org['Branches'] ?? 0);
-
-    $org['Secondary_school'] = (int)($org['Secondary_school'] ?? 0);
-    $org['Secondary_school_special'] = (int)($org['Secondary_school_special'] ?? 0);
-    $org['Gymnasium'] = (int)($org['Gymnasium'] ?? 0);
-    $org['Lyceum'] = (int)($org['Lyceum'] ?? 0);
-    $org['Cadet_corps'] = (int)($org['Cadet_corps'] ?? 0);
-}
-
-unset($org);
-
-$tableByYear = [];
-$yearsTable = [];
-
-foreach ($organizations as $orgRow) {
-    $y = (string)($orgRow['Year_period'] ?? '');
-    if ($y === '') continue;
-
-    if (!isset($tableByYear[$y])) {
-        $tableByYear[$y] = [
-            'Nursery_school_primary' => 0,
-            'Primary_school' => 0,
-            'Basic_school' => 0,
-            'sec_sc_sum' => 0,
-            'Secondary_school' => 0,
-            'Secondary_school_special' => 0,
-            'Gymnasium' => 0,
-            'Lyceum' => 0,
-            'Cadet_corps' => 0,
-            'Branches' => 0,
-            'Sanatorium_schools' => 0,
-            'Special_needs_schools' => 0,
-            'Evening_schools' => 0,
-            'Total_organizations' => 0,
-        ];
-        $yearsTable[] = $y;
-    }
-
-    foreach ($tableByYear[$y] as $k => $_) {
-        $tableByYear[$y][$k] += (int)($orgRow[$k] ?? 0);
-    }
-}
-
-sort($yearsTable);
-
-// 1) Инициализация структур
-$years = [];
-$dataByYear = [];
-
-foreach ($organizations as $org) {
-    $year = $org['Year_period'];
-
-    if (!isset($dataByYear[$year])) {
-        $dataByYear[$year] = [
-            'total' => 0,                       // График 1 нет
-            'school_types' => [0, 0, 0, 0, 0],  // График 2 нет
-            'nursery' => 0,                     // График 3 нет
-            'basic' => 0,                       // График 3 нет
-            'special' => 0,                     // График 3 нет
-            'pie_data' => [0, 0, 0, 0, 0, 0, 0, 0],    // График 4 (структура) без филиалов
-        ];
-        $years[] = $year;
-    }
-
-    // График 1: Общая динамика (итого БЕЗ филиалов уже заложено в SQL Total_organizations)
-    $dataByYear[$year]['total'] += $org['Total_organizations'];
-
-    // График 2: Подтипы средних школ (5-9)
-    $dataByYear[$year]['school_types'][0] += $org['Secondary_school'];          // 5
-    $dataByYear[$year]['school_types'][1] += $org['Secondary_school_special'];  // 6
-    $dataByYear[$year]['school_types'][2] += $org['Gymnasium'];                 // 7
-    $dataByYear[$year]['school_types'][3] += $org['Lyceum'];                    // 8
-    $dataByYear[$year]['school_types'][4] += $org['Cadet_corps'];               // 9
-
-    // График 3: Сравнение (пример 3 категорий)
-    $dataByYear[$year]['nursery'] += $org['Nursery_school_primary'];
-    $dataByYear[$year]['basic']   += $org['Basic_school'];
-    $dataByYear[$year]['special'] += $org['Special_needs_schools'];
-
-    // График 4: Структура по типам (ВСЁ, включая филиалы отдельным сектором)
-    $dataByYear[$year]['pie_data'][0] += $org['Nursery_school_primary'];
-    $dataByYear[$year]['pie_data'][1] += $org['Primary_school'];
-    $dataByYear[$year]['pie_data'][2] += $org['Basic_school'];
-    $dataByYear[$year]['pie_data'][3] += $org['sec_sc_sum'];
-    $dataByYear[$year]['pie_data'][4] += $org['Sanatorium_schools'];
-    $dataByYear[$year]['pie_data'][5] += $org['Special_needs_schools'];
-    $dataByYear[$year]['pie_data'][6] += $org['Evening_schools'];
-}
-
-// 2) Сортируем годы
-sort($years);
-
-// 3) Массивы для графиков
-$totalOrganizations = [];
-$nurseryData = [];
-$basicData = [];
-$specialData = [];
-
-$schoolTypesData = [0,0,0,0,0]; // сумма по всем выбранным годам
-$pieData = [0,0,0,0,0,0,0];   // сумма по всем выбранным годам
-
-foreach ($years as $year) {
-    $totalOrganizations[] = $dataByYear[$year]['total'];
-    $nurseryData[] = $dataByYear[$year]['nursery'];
-    $basicData[] = $dataByYear[$year]['basic'];
-    $specialData[] = $dataByYear[$year]['special'];
-}
-
-foreach ($dataByYear as $yearData) {
-    for ($i = 0; $i < 5; $i++) {
-        $schoolTypesData[$i] += $yearData['school_types'][$i];
-    }
-    for ($i = 0; $i < 7; $i++) {
-        $pieData[$i] += $yearData['pie_data'][$i];
-    }
-}
-
-// 4) Метки (строго соответствуют индексам массивов)
-$schoolTypesLabels = ['СОШ', 'СОШ с УИОП', 'Гимназии', 'Лицеи', 'Кадетские корпуса'];
-$pieLabels = ['НОШ д/сад', 'НОШ', 'Основные школы', 'Средние школы', 'Санаторные', 'ОВЗ школы', 'Вечерние'];
-
-// 5) Передача в JS
-echo "<script>";
-echo "window.years = " . json_encode($years, JSON_UNESCAPED_UNICODE) . ";";
-echo "window.totalOrganizations = " . json_encode($totalOrganizations) . ";";
-echo "window.nurseryData = " . json_encode($nurseryData) . ";";
-echo "window.basicData = " . json_encode($basicData) . ";";
-echo "window.specialData = " . json_encode($specialData) . ";";
-echo "window.schoolTypesLabels = " . json_encode($schoolTypesLabels, JSON_UNESCAPED_UNICODE) . ";";
-echo "window.schoolTypesData = " . json_encode($schoolTypesData) . ";";
-echo "window.pieLabels = " . json_encode($pieLabels, JSON_UNESCAPED_UNICODE) . ";";
-echo "window.pieData = " . json_encode($pieData) . ";";
-echo "</script>";
-
-
-// Получаем время обновления
-try {
-    $query = "SELECT MAX(Updated_date) as last_update FROM Area_organizations WHERE deleted = 0";
-    $stmt = $pdo->query($query);
-    $lastUpdate = $stmt->fetchColumn();
-    $displayTime = $lastUpdate ? date('H:i d.m.Y', strtotime($lastUpdate)) : date('H:i d.m.Y');
-} catch (Exception $e) {
-    error_log("Ошибка получения времени обновления: " . $e->getMessage());
-    $displayTime = date('H:i d.m.Y');
-}
+$docRoot = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+require_once $docRoot . '/v3/config/config.php';
+require_once __DIR__ . '/data.php';
 ?>
 
 <!----------------------- HTML --------------------------------->
@@ -246,13 +15,15 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Открытая статистика образовательных организаций</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>   
-    <?php include $_SERVER['DOCUMENT_ROOT'] . '/v3/styles/style_index.php'; ?>
+    <?php include $_SERVER['DOCUMENT_ROOT'] . '/v3/styles/style_index.php'; ?> <!---- ОТНОСИТЕЛЬНЫЙ ПУТЬ---->
+
+    <?php require_once __DIR__ . '/js_payload.php'; ?> <!----ПОДКЛЮЧЕНИЕ JS-СКРИПТА----->
 
     <link rel="icon" type="image/png" sizes="16x16" href="\v3\src\img\favicon16x16.png"> <!-- Иконка вкладки браузера -->
 </head>
 <body>
      <?php include $_SERVER['DOCUMENT_ROOT'] . '/v3/pages/shared/header.php'; ?>  <!-- HEADER -->
-    <?php include '../nav/nav_left.php'; ?>     <!-- Навигационная панель -->
+    <?php include '../nav/nav_left.php'; ?>     <!-- Навигационная панель -->    <!---- ОТНОСИТЕЛЬНЫЙ ПУТЬ---->
      
         <!-- Основной контент -->
     <div class="content-area">
@@ -602,43 +373,22 @@ try {
         </tbody>
     </table>
 
-</div>
-
+    </div>
         <?php else: ?>
-            <div class="no-results">
-                <h2>📝 Организации не найдены</h2>
-                <p>Измените параметры фильтрации или добавьте данные в систему.</p>
-            </div>
+            <?php
+                $emptyIcon = '📝';
+                $emptyTitle = 'Организации не найдены';
+                $emptyMessage = 'Измените параметры фильтрации или добавьте данные в систему.';
+                include $docRoot . '/v3/pages/shared/empty_state.php';
+            ?>
         <?php endif; ?>
-        
-
     </div>
-    <script>
-    (function () {
-    function hidePreloader() {
-        const preloader = document.getElementById('preloader');
-        if (!preloader) return;
-
-        preloader.style.transition = 'opacity 0.3s';
-        preloader.style.opacity = '0';
-
-        setTimeout(() => {
-            preloader.style.pointerEvents = 'none';
-            preloader.style.display = 'none';
-        }, 320);
-    }
-
-    window.addEventListener('load', () => setTimeout(hidePreloader, 200));
-    document.addEventListener('DOMContentLoaded', () => setTimeout(hidePreloader, 2000)); // подстраховка
-    })();
-    </script>
     
-    <?php include '../../scripts/open_network/index_script.php'; ?> 
-
-        </div>
-    </div>
-    <?php include '../shared/footer.php'; ?>
-    <?php include '../../styles/style_footer.php'; ?>
-    <?php include '../../styles/style_header.php'; ?>
+    <?php 
+    include '../../scripts/index_script.php'; 
+    include '../shared/footer.php';
+    include '../../styles/style_footer.php';
+    include '../../styles/style_header.php';
+    ?> <!---- ОТНОСИТЕЛЬНЫЕ ПУТИ---->
 </body>
 </html>

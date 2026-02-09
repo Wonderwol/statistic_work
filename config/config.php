@@ -1,4 +1,8 @@
 <?php
+declare(strict_types=1);
+
+define('PROJECT_ROOT', realpath(__DIR__ . '/..'));   // абсолютный путь на диске до /statistics
+
 // Настройки подключения к БД
 define('DB_HOST', 'SQL2008');
 define('DB_NAME', 'test_statistics');
