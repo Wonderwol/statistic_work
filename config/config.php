@@ -66,7 +66,6 @@ class Database {
                 throw new Exception("Unsupported database driver");
             }
             
-            echo "<!-- Подключение к БД установлено успешно -->\n";
             
         } catch (Exception $e) {
             // Логируем ошибку но не показываем детали пользователю
@@ -185,9 +184,9 @@ function safeEcho($value) {
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
-// Проверка соединения (опционально)
+/* Проверка соединения (опционально)
 if (!$db->testConnection()) {
     // Можно добавить обработку ошибки
     error_log("Database connection test failed");
 }
-?>
+?> */

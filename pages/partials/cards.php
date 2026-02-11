@@ -37,7 +37,7 @@ declare(strict_types=1);
     </div>
     <div class="stat-card">
         <h3 style="font-size: 14px;">Школы для детей с ограниченными возможностями здоровья</h3>
-        <div class="stat-value"><?= (int)$cards['special_needs'] ?></div>
+        <div class="stat-value"><?= (int)$cards['ovz'] ?></div>
     </div>
 </div>
 

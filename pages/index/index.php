@@ -14,16 +14,23 @@ require_once __DIR__ . '/data.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Открытая статистика образовательных организаций</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>   
-    <?php include $_SERVER['DOCUMENT_ROOT'] . '/v3/styles/style_index.php'; ?> <!---- ОТНОСИТЕЛЬНЫЙ ПУТЬ---->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <?php
+        include $docRoot . '/v3/styles/style_index.php';
+        include $docRoot . '/v3/styles/shared/style_footer.php';
+        include $docRoot . '/v3/styles/shared/style_header.php';
+        include $docRoot . '/v3/styles/shared/style_nav_left.php';  // НАВИГАЦИОННАЯ ПАНЕЛЬ
+        require_once __DIR__ . '/js_payload.php';
+    ?> <!----ПОДКЛЮЧЕНИЕ JS-СКРИПТА----->
+          
 
-    <?php require_once __DIR__ . '/js_payload.php'; ?> <!----ПОДКЛЮЧЕНИЕ JS-СКРИПТА----->
-
-    <link rel="icon" type="image/png" sizes="16x16" href="\v3\src\img\favicon16x16.png"> <!-- Иконка вкладки браузера -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/v3/src/img/favicon16x16.png"> <!-- Иконка вкладки браузера -->
 </head>
 <body>
-     <?php include $_SERVER['DOCUMENT_ROOT'] . '/v3/pages/shared/header.php'; ?>  <!-- HEADER -->
-    <?php include '../nav/nav_left.php'; ?>     <!-- Навигационная панель -->    <!---- ОТНОСИТЕЛЬНЫЙ ПУТЬ---->
+    <?php 
+    include $docRoot . '/v3/pages/shared/header.php';
+    include $docRoot . '/v3/nav/nav_left.php'; 
+    ?> <!-- HEADER -->     <!-- Навигационная панель -->    <!---- ОТНОСИТЕЛЬНЫЙ ПУТЬ---->
      
         <!-- Основной контент -->
     <div class="content-area">
@@ -66,8 +73,8 @@ require_once __DIR__ . '/data.php';
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                     <h1 style="color: #2c3e50; font-weight: bold; margin: 0; flex: 1;">Сеть образовательных организаций Новосибирской области
                 </h1>
-                    <a href="info.php" style="margin-top: 6px; margin-right: 18px;">
-                        <img src="\v3\src\img\info.png" alt="Информация">
+                    <a href="/v3/pages/info.php" style="margin-top: 6px; margin-right: 18px;">
+                        <img src="/v3/src/img/info.png" alt="Информация">
                     </a>
                     <button id="showCardsBtn" class="view-btn active" onclick="showCards()">график</button>
                     <button id="showTableBtn" class="view-btn" onclick="showTable()">таблица</button>
@@ -382,13 +389,13 @@ require_once __DIR__ . '/data.php';
                 include $docRoot . '/v3/pages/shared/empty_state.php';
             ?>
         <?php endif; ?>
-    </div>
-    
-    <?php 
-    include '../../scripts/index_script.php'; 
-    include '../shared/footer.php';
-    include '../../styles/style_footer.php';
-    include '../../styles/style_header.php';
-    ?> <!---- ОТНОСИТЕЛЬНЫЕ ПУТИ---->
+    </div> <!-- закрыли .container -->
+
+    </div> <!-- закрыли .content-area -->
+
+    <?php
+        include $docRoot . '/v3/pages/shared/footer.php';
+        include $docRoot . '/v3/scripts/index/index_script.php';
+    ?>
 </body>
 </html>
