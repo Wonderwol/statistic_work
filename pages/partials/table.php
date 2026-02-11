@@ -63,7 +63,7 @@ declare(strict_types=1);
             <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Branches'] ?></td><?php endforeach; ?>
         </tr>
 
-        <tr style="background-color:#6d444b; color:#fff; font-weight:bold;">
+        <tr class="rowbr" style="background-color:#6d444b; color:#fff; font-weight:bold;">
             <td style="padding-left:9%;">итого ОО</td>
             <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Total_organizations'] ?></td><?php endforeach; ?>
         </tr>
@@ -78,7 +78,7 @@ declare(strict_types=1);
             <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Special_needs_schools'] ?></td><?php endforeach; ?>
         </tr>
 
-        <tr style="background-color:#6d444b; color:#fff; font-weight:bold;">
+        <tr class='rowbr' style="background-color:#6d444b; color:#fff; font-weight:bold;">
             <td style="padding-left:9%;">итого дневные ОО</td>
             <?php foreach ($yearsTable as $y): ?>
                 <td style="text-align:center;"><?= (int)$tableByYear[$y]['Total_organizations'] - (int)$tableByYear[$y]['Evening_schools'] ?></td>

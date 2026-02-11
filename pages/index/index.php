@@ -22,7 +22,6 @@ require_once __DIR__ . '/data.php';
         include $docRoot . '/v3/styles/shared/style_nav_left.php';  // НАВИГАЦИОННАЯ ПАНЕЛЬ
         require_once __DIR__ . '/js_payload.php';
     ?> <!----ПОДКЛЮЧЕНИЕ JS-СКРИПТА----->
-          
 
     <link rel="icon" type="image/png" sizes="16x16" href="/v3/src/img/favicon16x16.png"> <!-- Иконка вкладки браузера -->
 </head>
@@ -115,7 +114,6 @@ require_once __DIR__ . '/data.php';
                         </label>
                     </div>
                 <?php endforeach; ?>
-                <div class="no-results">Ничего не найдено</div>
                         </div>
                     </div>
                 </div>
@@ -149,7 +147,6 @@ require_once __DIR__ . '/data.php';
                                     </label>
                                 </div>
                             <?php endforeach; ?>
-                            <div class="no-results">Ничего не найдено</div>
                         </div>
                     </div>
                 </div>
@@ -181,7 +178,6 @@ require_once __DIR__ . '/data.php';
                                     </label>
                                 </div>
                             <?php endforeach; ?>
-                            <div class="no-results">Ничего не найдено</div>
                         </div>
                     </div>
                 </div>
@@ -278,10 +274,21 @@ require_once __DIR__ . '/data.php';
 
 <!-- ГРАФИКИ -->
 <div class="chart-container">
-    <div class="chart-box">
+    <div class="chart-box chart-box--card">
         <div class="chart-header">
-            <h3>Структура по типам <?= $show_single_year_charts ? "($years[0])" : '(суммарно)' ?></h3>
+            <div>
+                <h3>
+                    Структура по типам
+                    <?= $show_single_year_charts
+                        ? '(' . $years[0] . ')'
+                        : '(' . $years[0] . '–' . $years[count($years) - 1] . ')' ?>
+                </h3>
+                <div class="chart-subnote">Итого по каждому году показано над столбиком, доли — в подсказке.</div>
+            </div>
+
+            <div id="structureLegend" class="chart-legend" aria-label="Легенда структуры"></div>
         </div>
+
         <div class="chart-wrap chart-wrap--big no-hover">
             <canvas id="pieChart"></canvas>
         </div>

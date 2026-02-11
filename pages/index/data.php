@@ -25,6 +25,17 @@ if (!is_array($locality_types) && $locality_types !== '') $locality_types = [$lo
 
 // 2) Данные для селекторов фильтров
 $years_data = index_fetch_years_data($pdo);
+// Если фильтры по году не применялись (year_id[] не пришёл) — показываем текущий год по умолчанию
+if (!isset($_GET['year_id']) || empty($year_ids)) {
+    try {
+        $defaultYear = index_fetch_default_year_period($pdo);
+        if ($defaultYear !== null) {
+            $year_ids = [$defaultYear];
+        }
+    } catch (Throwable $e) {
+        error_log('Ошибка получения default Year_period: ' . $e->getMessage());
+    }
+}
 $org_types_data = index_fetch_org_types_data($pdo);
 $locality_types_data = index_fetch_locality_types_data($pdo);
 
@@ -153,6 +164,8 @@ foreach ($organizations as $org) {
 
 sort($years);
 
+$show_single_year_charts = (count($years) === 1);
+
 // линии/столбцы по годам
 $totalOrganizations = [];
 $nurseryData = [];
@@ -177,6 +190,16 @@ foreach ($dataByYear as $yd) {
 
 $schoolTypesLabels = ['СОШ', 'СОШ с УИОП', 'Гимназии', 'Лицеи', 'Кадетские корпуса'];
 $pieLabels = ['НОШ д/сад', 'НОШ', 'Основные школы', 'Средние школы', 'Санаторные', 'ОВЗ школы', 'Вечерние'];
+
+$pieSeries = []; // [тип][год] => значения по каждому году
+for ($i = 0; $i < count($pieLabels); $i++) {
+    $row = [];
+    foreach ($years as $y) {
+        $row[] = (int)($dataByYear[$y]['pie'][$i] ?? 0);
+    }
+    $pieSeries[] = $row;
+}
+
 
 // 7) Карточки (если у тебя их расчёт делался в PHP)
 $cards = [

@@ -132,8 +132,8 @@
 
 .clear-selection:hover,
 .select-all:hover {
-  background: #98fb98;
-  color: #000 !important;
+  background: var(--primary-light);
+  color: var(--primary-color) !important;
   transform: translateY(-1px);
 }
 
@@ -159,11 +159,12 @@
 
 .dropdown-checkbox-group .checkbox-item:hover {
   background-color: #f0f0f0;
-  border-left-color: #98fb98;
+  border-left-color: var(--primary-color);
 }
 
+
 .dropdown-checkbox-group .checkbox-item.selected {
-  background-color: #e8f5e9;
+  background-color: var(--primary-light);
   border-left: 3px solid var(--primary-color);
   font-weight: 600;
   color: var(--primary-color);
@@ -207,7 +208,7 @@
 }
 
 #year-group .checkbox-item.selected {
-  background-color: #e8f5e9;
+  background-color: var(--primary-light);
   border-left: 3px solid var(--primary-color);
 }
 

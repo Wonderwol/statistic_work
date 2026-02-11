@@ -19,4 +19,5 @@ window.schoolTypesData = <?= json_encode($schoolTypesData ?? [], $flags) ?>;
 
 window.pieLabels = <?= json_encode($pieLabels ?? [], $flags) ?>;
 window.pieData = <?= json_encode($pieData ?? [], $flags) ?>;
+window.pieSeries = <?= json_encode($pieSeries ?? [], $flags) ?>;
 </script>

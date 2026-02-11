@@ -10,15 +10,19 @@
 /* Карточка графика */
 .chart-box {
   background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow);
   border: 1px solid rgba(0,0,0,0.06);
-  padding: 16px 16px 10px 16px;
-  min-height: 360px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
+  padding: 16px;
+  border-radius: var(--border-radius);
+  border-top: 4px solid var(--primary-color);
+  overflow: hidden; /* важно: ничего не "вылезает" */
 }
+
+.chart-box--card:hover {
+  transform: none;
+  box-shadow: var(--shadow);
+}
+
 
 /* Заголовок */
 .chart-header {
@@ -36,6 +40,16 @@
   font-size: 15px;
   line-height: 1.35;
   flex: 1;
+}
+
+.chart-subnote{
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(44,62,80,0.65);
+}
+
+.chart-wrap{
+  overflow: hidden; /* страховка от любых оверфлоу */
 }
 
 /* Кнопки/действия у графика */
@@ -81,9 +95,11 @@
 .chart-wrap {
   position: relative;
   width: 100%;
-  flex: 1;
+  flex: 0 0 auto;     /* важно: не flex:1, иначе height может "схлопываться" при зуме */
   min-height: 320px;
+  height: 420px;      /* базовая высота для обычных графиков */
 }
+
 
 /* Canvas всегда занимает chart-wrap */
 .chart-wrap > canvas {
@@ -133,6 +149,7 @@
 /* Большой график, если нужен */
 .chart-wrap.chart-wrap--big {
   height: 560px;
+  min-height: 560px;
 }
 
 /* Специфичный pieChart (если используется именно такой высокий) */
@@ -140,4 +157,52 @@
   max-height: none !important;
 }
 
+.chart-topbar{
+  display:flex;
+  align-items:flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
 
+.chart-title{
+  margin: 0;
+  font-weight: 900;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.chart-legend{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.chart-legend__item{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--primary-light);
+  border: 1px solid rgba(109, 68, 75, .18);
+  color: var(--primary-color);
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chart-legend__dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.chart-legend__value{
+  color: rgba(44,62,80,.85);
+  font-weight: 900;
+  margin-left: 6px;
+}

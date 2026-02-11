@@ -56,9 +56,24 @@
   color: #333;
 }
 
-/* итоговые строки (если у тебя в HTML они задаются inline background-color) */
+/* итоговые строки (в HTML: background-color:#6d444b без пробела) */
+.results tr[style*="background-color:#6d444b"],
 .results tr[style*="background-color: #6d444b"] {
   background: #6d444b !important;
-  color: #fff;
   font-weight: 700;
+}
+
+/* делаем белым ВСЁ содержимое строки, включая первую колонку и ссылки */
+.results tr[style*="background-color:#6d444b"] td,
+.results tr[style*="background-color:#6d444b"] th,
+.results tr[style*="background-color:#6d444b"] td:first-child,
+.results tr[style*="background-color:#6d444b"] td a,
+.results tr[style*="background-color:#6d444b"] td *,
+
+.results tr[style*="background-color: #6d444b"] td,
+.results tr[style*="background-color: #6d444b"] th,
+.results tr[style*="background-color: #6d444b"] td:first-child,
+.results tr[style*="background-color: #6d444b"] td a,
+.results tr[style*="background-color: #6d444b"] td * {
+  color: #fff !important;
 }

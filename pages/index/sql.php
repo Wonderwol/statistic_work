@@ -13,7 +13,7 @@ function index_norm_list(mixed $v): array
 }
 
 /**
- * Оставляем только целые числа (для IN (...)).
+ * Оставляем только целые числа (для IN (...)) — для кодов (районы/типы местности).
  */
 function index_only_ints(array $arr): array
 {
@@ -27,6 +27,55 @@ function index_only_ints(array $arr): array
     $out = array_values(array_unique($out));
     sort($out);
     return $out;
+}
+
+/**
+ * Year_period может быть строкой: 2024, 2023-2024, 2023/2024
+ * Разрешаем только безопасные форматы.
+ */
+function index_only_year_periods(array $arr): array
+{
+    $out = [];
+    foreach ($arr as $v) {
+        $s = trim((string)$v);
+        if ($s === '') continue;
+
+        // нормализуем "длинные" тире в обычный дефис
+        $s = str_replace(["\u{2013}", "\u{2014}"], '-', $s);
+        // убираем пробелы внутри
+        $s = preg_replace('/\s+/', '', $s);
+
+        // допустимые форматы: 2024 | 2023-2024 | 2023/2024
+        if (preg_match('/^\d{4}([\-\/]\d{4})?$/', $s)) {
+            $out[] = $s;
+        }
+    }
+
+    $out = array_values(array_unique($out));
+    sort($out, SORT_NATURAL);
+    return $out;
+}
+
+function index_fetch_default_year_period(PDO $pdo): ?string
+{
+    $sql = "
+        SELECT TOP 1
+            ao.Year_period
+        FROM Area_organizations ao
+        WHERE ao.deleted = 0
+          AND ao.Year_period IS NOT NULL
+          AND LTRIM(RTRIM(ao.Year_period)) <> ''
+        ORDER BY
+            TRY_CONVERT(int, LEFT(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(ao.Year_period)),'–','-'),'—','-'),' ',''), 4)) DESC,
+            TRY_CONVERT(int, RIGHT(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(ao.Year_period)),'–','-'),'—','-'),' ',''), 4)) DESC,
+            ao.Year_period DESC
+    ";
+
+    $v = $pdo->query($sql)->fetchColumn();
+    if ($v === false || $v === null) return null;
+
+    $v = trim((string)$v);
+    return $v !== '' ? $v : null;
 }
 
 /**
@@ -91,21 +140,20 @@ function index_fetch_last_update(PDO $pdo): ?string
 
 /**
  * Основная выборка организаций с фильтрами.
- * Важно: возвращает те же поля-агрегаты, которые у тебя уже используются в index.php.
  *
  * $filters:
  * - org_type (Area_code) — одно значение (radio)
- * - year_id[] (Year_period) — массив (checkbox)
+ * - year_id[] (Year_period) — массив (checkbox), может быть строкой 2023-2024
  * - locality_type (Area_type_code) — одно значение (radio), по умолчанию 3 если не задано
  */
 function index_fetch_organizations(PDO $pdo, array $filters): array
 {
-    $org_type_raw = $filters['org_type'] ?? null;         // radio: одно значение
-    $year_ids_raw = $filters['year_id'] ?? [];            // checkbox: массив
-    $locality_raw = $filters['locality_type'] ?? null;    // radio: одно значение
+    $org_type_raw = $filters['org_type'] ?? null;
+    $year_ids_raw = $filters['year_id'] ?? [];
+    $locality_raw = $filters['locality_type'] ?? null;
 
     $org_type_list = index_only_ints(index_norm_list($org_type_raw));
-    $year_ids_list = index_only_ints(index_norm_list($year_ids_raw));
+    $year_ids_list = index_only_year_periods(index_norm_list($year_ids_raw));   // ВАЖНО: не ints
     $locality_list = index_only_ints(index_norm_list($locality_raw));
 
     // По умолчанию "Всего" (как у тебя было раньше)
@@ -149,15 +197,14 @@ function index_fetch_organizations(PDO $pdo, array $filters): array
     $sql .= " AND ao.Area_type_code IN ($ph)";
     $params = array_merge($params, $locality_list);
 
-    // org_type (radio) — если выбран
+    // org_type (radio)
     if (!empty($org_type_list)) {
-        // обычно radio -> одно значение, но обработаем и массив
         $ph = implode(',', array_fill(0, count($org_type_list), '?'));
         $sql .= " AND ao.Area_code IN ($ph)";
         $params = array_merge($params, $org_type_list);
     }
 
-    // year_id[] — если выбраны годы
+    // year_id[] — Year_period (строка/год)
     if (!empty($year_ids_list)) {
         $ph = implode(',', array_fill(0, count($year_ids_list), '?'));
         $sql .= " AND ao.Year_period IN ($ph)";
