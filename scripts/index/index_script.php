@@ -311,11 +311,7 @@
     if (typeof window.initializeCharts === 'function') {
       window.initializeCharts();
       requestAnimationFrame(() => {
-        Object.values(charts).forEach(c => {
-          if (!c) return;
-          try { c.resize(); } catch (e) {}
-          try { c.update('none'); } catch (e) {}
-        });
+        ChartRegistry.resizeAll();
       });
     }
   };
@@ -341,11 +337,42 @@
     if (showCardsBtn) showCardsBtn.classList.remove('active');
 
     // корректно уничтожить ВСЕ графики (а не window.__charts.structure которого нет)
-    Object.keys(charts).forEach((k) => destroyIfExists(k));
+    ChartRegistry.destroyAll();
   };
 
 
+ const ChartRegistry = (() => {
   const charts = {};
+
+  function destroy(key) {
+    if (charts[key]) {
+      try { charts[key].destroy(); } catch (e) {}
+      charts[key] = null;
+    }
+  }
+
+  function create(key, factory) {
+    destroy(key);
+    const inst = factory();
+    charts[key] = inst;
+    return inst;
+  }
+
+  function destroyAll() {
+    Object.keys(charts).forEach(destroy);
+  }
+
+  function resizeAll() {
+    Object.values(charts).forEach((c) => {
+      if (!c) return;
+      try { c.resize(); } catch (e) {}
+      try { c.update('none'); } catch (e) {}
+    });
+  }
+
+  return { create, destroy, destroyAll, resizeAll, _charts: charts };
+})();
+
 
   function baseOptions() {
   return {
@@ -404,10 +431,40 @@
   };
 }
 
+function buildOptions(extra = {}) {
+  const base = baseOptions();
 
-  function destroyIfExists(key) {
-    if (charts[key]) { charts[key].destroy(); charts[key] = null; }
+  // поверхностный merge
+  const out = { ...base, ...extra };
+
+  // plugins deep merge
+  const bp = base.plugins || {};
+  const ep = extra.plugins || {};
+  out.plugins = { ...bp, ...ep };
+
+  // tooltip deep merge
+  if (bp.tooltip || ep.tooltip) {
+    const bt = bp.tooltip || {};
+    const et = ep.tooltip || {};
+    out.plugins.tooltip = { ...bt, ...et };
+    out.plugins.tooltip.callbacks = { ...(bt.callbacks || {}), ...(et.callbacks || {}) };
   }
+
+  // legend deep merge
+  if (bp.legend || ep.legend) {
+    const bl = bp.legend || {};
+    const el = ep.legend || {};
+    out.plugins.legend = { ...bl, ...el };
+    out.plugins.legend.labels = { ...(bl.labels || {}), ...(el.labels || {}) };
+  }
+
+  // scales
+  out.scales = extra.scales || base.scales;
+
+  return out;
+}
+
+
 
   window.initializeCharts = function () {
   if (typeof Chart === 'undefined') return;
@@ -418,11 +475,11 @@
     const n = parseInt(v, 10);
     return Number.isFinite(n) ? n : 3;
   })();
-
+   // Переходник: старый код (charts.* и destroyIfExists) теперь работает через ChartRegistry
+  const charts = ChartRegistry._charts;
   function destroyIfExists(key) {
-    if (charts[key]) { charts[key].destroy(); charts[key] = null; }
+    ChartRegistry.destroy(key);
   }
-
   function tooltipLabel(ctx) {
     // v3+: ctx.parsed может быть числом/объектом; v2: ctx.yLabel/ctx.xLabel
     const val =
@@ -545,35 +602,13 @@
             fill: true
             }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-
-          interaction: { mode: 'index', intersect: false },
-          hover: { mode: 'index', intersect: false },
-          onHover: (evt, activeEls) => {
-            const c = evt?.native?.target;
-            if (c) c.style.cursor = activeEls && activeEls.length ? 'pointer' : 'default';
-          },
-
-          plugins: (major >= 3) ? {
-            legend: { display: false },
-            tooltip: {
-              mode: 'index',
-              intersect: false,
-              callbacks: { label: tooltipLabel }
-            }
-          } : {
-            legend: { display: false },
-            tooltips: {
-              mode: 'index',
-              intersect: false,
-              callbacks: { label: function (item) { return fmt.format(item.yLabel); } }
-            }
-          },
-
-          scales: scalesLine()
-        }
+        options: buildOptions({
+  plugins: {
+    legend: { display: false },
+    tooltip: { callbacks: { label: tooltipLabel } }
+  },
+  scales: scalesLine()
+})
       });
     }
   } catch (e) { console.error('totalChart error:', e); }
@@ -596,18 +631,10 @@
             borderSkipped: false
           }]
         },
-        options: {
-          interaction: { mode: 'index', intersect: false },
-            hover: { mode: 'index', intersect: false },
-            onHover: (evt, activeEls) => {
-              const c = evt?.native?.target;
-              if (c) c.style.cursor = activeEls && activeEls.length ? 'pointer' : 'default';
-            },
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: basePluginsNoLegend(),
-          scales: scalesBar()
-        }
+        options: buildOptions({
+        plugins: basePluginsNoLegend(),
+        scales: scalesBar()
+      })
       });
     }
   } catch (e) { console.error('schoolTypesChart error:', e); }
