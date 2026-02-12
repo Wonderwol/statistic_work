@@ -4,13 +4,21 @@
     padding: 0;
 }
 
-body {
+html, body{
+    height: 100%;
+}
+
+body{
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #ffffff;
     color: var(--dark-gray);
     line-height: 1.6;
-    margin-left: 20%;
-    margin-right: 20%;
+
+    margin: 0;
+    padding: 0;
+
+    /* чтобы никогда не появлялся горизонтальный скролл из-за мелких переполнений */
+    overflow-x: hidden;
 }
 
 @keyframes fadeInUp {

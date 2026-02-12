@@ -77,3 +77,10 @@
 .results tr[style*="background-color: #6d444b"] td * {
   color: #fff !important;
 }
+
+#tableView tr.row-total td,
+#tableView tr.row-total th{
+  background-color:#6d444b;
+  color:#fff;
+  font-weight:bold;
+}

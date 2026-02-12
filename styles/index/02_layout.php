@@ -1,66 +1,150 @@
-.content-area {
+.content-area{
     flex: 1;
+    width: 100%;
+    padding: 0; /* чтобы ширину задавал именно .container */
 }
 
-
- .content-area .container {
-        padding: 15px 0;
+.content-area .container{
+    width: 100%;
+    max-width: var(--nimro-page-max);
+    margin: 0 auto;
+    padding: 16px var(--nimro-page-pad);
+    box-sizing: border-box;
 }
 
-
-.main-wrapper {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-
-  /* вместо media padding */
-  padding: 0 15px;
-
-  /* вместо media flex-direction */
-  flex-wrap: wrap;
+/* мобильные: колонка должна быть 100% */
+@media (max-width: 920px){
+  .content-area .container{
+    max-width: 100%;
+    padding: 12px 16px;
+  }
 }
 
-/* если есть левое меню — держим его фиксированным */
-#nav-left, .nav-left, .sidebar {
-  flex: 0 0 260px;
-  min-width: 260px;
+/* Чуть компактнее на телефоне */
+@media (max-width: 640px){
+    .content-area{
+        padding: 12px;
+    }
 }
 
-/* контент пусть забирает остаток и умеет сжиматься */
-.content-area {
-  flex: 1 1 600px;
-  min-width: 0;
+/* Ряд заголовка страницы: переносится и не ломается на узких экранах */
+.page-head{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
 }
 
-h1 {
-  color: var(--primary-color);
-  font-weight: 600;
-  font-size: 24px;
-  margin-bottom: 10px;
+.page-head__title{
+    margin: 0;
+    flex: 1 1 320px;
+    min-width: 240px;
 }
 
-.subtitle {
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 20px;
+.page-head__actions{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
-/* Скроллбар */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* На телефоне кнопки вида становятся удобными */
+@media (max-width: 640px){
+    .page-head__actions{
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .view-btn{
+        flex: 1 1 140px;
+        min-width: 0; /* перебиваем min-width:100px */
+    }
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+/* Хлебные крошки в общей колонке */
+.breadcrumbs{
+  margin: 0 0 10px 0;
+  padding: 5px 0;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+.breadcrumbs a{
+  color: #6d444b;
+  text-decoration: none;
+  opacity: 0.8;
+}
+.breadcrumbs span{
+  color: rgba(0, 0, 0, 0.7);
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: 4px;
+/* ===== Dashboard (график слева, сводка справа) ===== */
+.dashboard{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+  margin-top: 16px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-hover);
+.dashboard__main{ min-width: 0; }
+.dashboard__side{ min-width: 0; }
+
+@media (max-width: 1100px){
+  .dashboard{ grid-template-columns: minmax(0, 1fr) 320px; }
 }
+
+@media (max-width: 920px){
+  .dashboard{ grid-template-columns: 1fr; }
+}
+
+/* Табличный вид: правая колонка убирается, чтобы таблица была на всю ширину */
+body.view-table .dashboard{
+  grid-template-columns: 1fr;
+}
+body.view-table .dashboard__side{
+  display: none;
+}
+
+/* Убираем лишний верхний отступ у графиков внутри дашборда */
+.dashboard .chart-container{ margin-top: 0; }
+
+/* ===== Правый dock со сводкой (вне центральной колонки .container) ===== */
+:root{
+  --nimro-dock-w: 360px;
+  --nimro-dock-r: 16px; /* отступ от правого края окна */
+  --nimro-dock-z: 900;  /* ниже nav-left (1000+), выше контента */
+}
+
+.stats-dock{
+  position: fixed;
+  right: var(--nimro-dock-r);
+  top: 220px;               /* стартовое значение, JS подстроит под фильтры */
+  width: min(var(--nimro-dock-w), 34vw);
+  max-height: none;
+  overflow: visible;
+
+  z-index: var(--nimro-dock-z);
+
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.96);
+  border: 1px solid rgba(0,0,0,.08);
+  box-shadow: 0 14px 40px rgba(0,0,0,.12);
+  backdrop-filter: blur(6px);
+}
+
+/* На узких экранах фиксированная панель будет мешать — уводим в поток */
+@media (max-width: 920px){
+  .stats-dock{
+    position: static;
+    width: 100%;
+    max-height: none;
+    margin: 12px 0 0 0;
+    top: auto;
+    right: auto;
+    backdrop-filter: none;
+  }
+}
+

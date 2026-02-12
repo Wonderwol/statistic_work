@@ -12,4 +12,9 @@
         --shadow: 0 2px 10px rgba(0,0,0,0.1);
         --border-radius: 8px;
         --transition: all 0.3s ease;
+        /* ширина “колонки” как раньше: 60% экрана, но не больше 1280px */
+        --nimro-page-max: min(60vw, 1280px);
+
+        /* боковые отступы внутри колонки (как в header padding) */
+        --nimro-page-pad: 14px;
     }

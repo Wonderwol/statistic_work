@@ -41,7 +41,7 @@ function index_only_year_periods(array $arr): array
         if ($s === '') continue;
 
         // нормализуем "длинные" тире в обычный дефис
-        $s = str_replace(["\u{2013}", "\u{2014}"], '-', $s);
+        $s = str_replace(["\u{2013}", "\u{2014}", '–', '—'], '-', $s);
         // убираем пробелы внутри
         $s = preg_replace('/\s+/', '', $s);
 
@@ -153,16 +153,17 @@ function index_fetch_organizations(PDO $pdo, array $filters): array
     $locality_raw = $filters['locality_type'] ?? null;
 
     $org_type_list = index_only_ints(index_norm_list($org_type_raw));
-    $year_ids_list = index_only_year_periods(index_norm_list($year_ids_raw));   // ВАЖНО: не ints
+    $year_ids_list = index_only_year_periods(index_norm_list($year_ids_raw)); // ВАЖНО: не ints
     $locality_list = index_only_ints(index_norm_list($locality_raw));
 
-    // По умолчанию "Всего" (как у тебя было раньше)
+    // По умолчанию "Всего"
     if (empty($locality_list)) {
         $locality_list = [3];
     }
 
     $sql = "
         SELECT
+            ao.Area_code AS Area_code,
             da.Area_name,
             ao.Year_period,
 
@@ -212,7 +213,7 @@ function index_fetch_organizations(PDO $pdo, array $filters): array
     }
 
     $sql .= "
-        GROUP BY da.Area_name, ao.Year_period
+        GROUP BY ao.Area_code, da.Area_name, ao.Year_period
         ORDER BY da.Area_name, ao.Year_period
     ";
 

@@ -92,12 +92,14 @@
 }
 
 /* Область для canvas */
-.chart-wrap {
+.chart-wrap{
   position: relative;
   width: 100%;
-  flex: 0 0 auto;     /* важно: не flex:1, иначе height может "схлопываться" при зуме */
-  min-height: 320px;
-  height: 420px;      /* базовая высота для обычных графиков */
+  flex: 0 0 auto;
+
+  /* адаптивная высота: не меньше ~260px, обычно ~52vh, но не больше 520px */
+  height: clamp(260px, 52vh, 520px);
+  min-height: 260px;
 }
 
 
@@ -142,14 +144,17 @@
   padding: 14px;
 }
 
-.chart-box.is-fullscreen .chart-wrap {
+.chart-box.is-fullscreen .chart-wrap{
+  /* 120px — запас под заголовок/кнопки/паддинги */
+  height: calc(100vh - 120px);
   min-height: 0;
 }
 
 /* Большой график, если нужен */
-.chart-wrap.chart-wrap--big {
-  height: 560px;
-  min-height: 560px;
+.chart-wrap.chart-wrap--big{
+  /* высокий график: от 340px до 760px, ориентир ~70vh */
+  height: clamp(340px, 70vh, 760px);
+  min-height: 340px;
 }
 
 /* Специфичный pieChart (если используется именно такой высокий) */
@@ -205,4 +210,16 @@
   color: rgba(44,62,80,.85);
   font-weight: 900;
   margin-left: 6px;
+}
+
+@media (max-width: 640px){
+  .chart-box{ padding: 12px; }
+  .chart-wrap{
+    height: clamp(220px, 46vh, 380px);
+    min-height: 220px;
+  }
+  .chart-wrap.chart-wrap--big{
+    height: clamp(260px, 62vh, 520px);
+    min-height: 260px;
+  }
 }
