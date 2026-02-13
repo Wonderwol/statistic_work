@@ -13,18 +13,86 @@ window.initializeCharts = function () {
 
   const { pieLabels, pieData } = getChartData();
 
+  // ===== фирменные цвета из CSS =====
+  function cssVar(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name);
+    return (v || '').trim() || fallback;
+  }
+
+  function hexToRgb(hex) {
+    const h = String(hex || '').trim().replace('#', '');
+    if (h.length === 3) {
+      return {
+        r: parseInt(h[0] + h[0], 16),
+        g: parseInt(h[1] + h[1], 16),
+        b: parseInt(h[2] + h[2], 16)
+      };
+    }
+    if (h.length === 6) {
+      return {
+        r: parseInt(h.slice(0, 2), 16),
+        g: parseInt(h.slice(2, 4), 16),
+        b: parseInt(h.slice(4, 6), 16)
+      };
+    }
+    return { r: 109, g: 68, b: 75 }; // fallback #6d444b
+  }
+
+  function mix(a, b, t) {
+    return {
+      r: Math.round(a.r + (b.r - a.r) * t),
+      g: Math.round(a.g + (b.g - a.g) * t),
+      b: Math.round(a.b + (b.b - a.b) * t)
+    };
+  }
+
+  function shade(rgb, t) {
+    // t: -1..1 (минус — темнее к чёрному, плюс — светлее к белому)
+    const target = (t >= 0) ? { r: 255, g: 255, b: 255 } : { r: 0, g: 0, b: 0 };
+    return mix(rgb, target, Math.min(1, Math.abs(t)));
+  }
+
+  function rgba(rgb, a) {
+    return `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
+  }
+
+  const BRAND = hexToRgb(cssVar('--primary-color', '#6d444b'));
+  const WHITE = { r: 255, g: 255, b: 255 };
+
+    // Контрастная палитра в стиле сайта: коричневый / бежевый / серый / белый
+  // Если в :root нет переменных --nimro-beige/--nimro-gray, будут fallback.
+  const BROWN = BRAND;
+  const BEIGE = hexToRgb(cssVar('--nimro-beige', '#e8dcc8'));
+  const GRAY  = hexToRgb(cssVar('--nimro-gray',  '#b8b0b0'));
+  const NEAR_WHITE = { r: 245, g: 245, b: 245 }; // чтобы отличался от чисто белого фона
+
+  // Расширяем палитру, чтобы хватало на много столбцов (контрастно, но в гамме)
+  const SITE_RGB = [
+    shade(BROWN, -0.18), // темный коричневый
+    BROWN,               // коричневый
+    shade(BEIGE, -0.10), // бежевый темнее
+    BEIGE,               // бежевый
+    shade(GRAY, -0.14),  // серый темнее
+    GRAY,                // серый
+    shade(NEAR_WHITE, -0.08), // почти белый (чуть темнее, чем фон)
+    NEAR_WHITE
+  ];
+
+  const SITE_COLORS = SITE_RGB.map(c => rgba(c, 0.92));
+
+
   const pairs = pieLabels.map((label, i) => {
     const value = Number(pieData[i] ?? 0);
     return {
       label: String(label ?? ''),
-      value: Number.isFinite(value) ? value : 0,
-      color: THEME_PALETTE[i % THEME_PALETTE.length]
+      value: Number.isFinite(value) ? value : 0
     };
   }).filter(p => p.value > 0).sort((a, b) => b.value - a.value);
 
   const labels = pairs.map(p => p.label);
   const values = pairs.map(p => p.value);
-  const colors = pairs.map(p => toRgba(p.color, 0.88));
+
+  const colors = pairs.map((_, i) => SITE_COLORS[i % SITE_COLORS.length]);
   const total = values.reduce((s, v) => s + v, 0);
 
   const barValueLabels = {
@@ -60,7 +128,9 @@ window.initializeCharts = function () {
         label: 'Количество организаций',
         data: values,
         backgroundColor: colors,
-        borderWidth: 0,
+        hoverBackgroundColor: colors.map(c => c.replace(/,0\.88\)$/, ',1)')),
+        borderColor: 'rgba(80, 60, 60, 0.55)',
+        borderWidth: 1.5,
         borderRadius: 10,
         borderSkipped: false,
         minBarLength: 3
@@ -76,8 +146,7 @@ window.initializeCharts = function () {
               const v = Number(ctx.parsed?.x ?? ctx.raw ?? 0);
               const pct = total ? (v / total * 100) : 0;
               return `${fmt.format(v)} (${pct.toFixed(1)}%)`;
-            },
-            footer: () => (total ? `Итого: ${fmt.format(total)}` : '')
+            }
           }
         }
       },

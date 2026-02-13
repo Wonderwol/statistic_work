@@ -127,6 +127,8 @@ onReady(() => {
     const filtersRect = filters.getBoundingClientRect();
     const minTop = Math.max(margin, Math.round(filtersRect.bottom + margin));
 
+
+    dock.style.maxHeight = ''; // на всякий случай сбрасываем перед измерением
     const dockRect = dock.getBoundingClientRect();
     const anchor = getAnchor();
 
@@ -134,15 +136,26 @@ onReady(() => {
 
     if (anchor) {
       const aRect = anchor.getBoundingClientRect();
-      top = Math.round(aRect.top + (aRect.height - dockRect.height) / 2);
+
+            // Центр dock = центр графика
+      const targetCenter = aRect.top + (aRect.height / 2);
+      top = Math.round(targetCenter - (dockRect.height / 2));
+
+      // Ограничение только сверху (не наезжать на фильтры)
       top = Math.max(minTop, top);
+
     }
 
-    const maxTop = Math.max(margin, Math.round(window.innerHeight - margin - 180));
-    top = Math.min(top, maxTop);
+     const prevH = dockRect.height;
 
     dock.style.top = top + 'px';
-    dock.style.maxHeight = Math.max(180, window.innerHeight - top - margin) + 'px';
+    dock.style.maxHeight = ''; // не ограничиваем высоту => не будет внутреннего скролла
+
+    // Если после установки top/zoom изменилась высота (переносы текста) — пересчитаем ещё раз
+    const newH = dock.getBoundingClientRect().height;
+    if (Math.abs(newH - prevH) >= 2) {
+      schedule();
+    } // не ограничиваем высоту => не будет внутреннего скролла
   }
 
   function schedule() {
@@ -153,5 +166,41 @@ onReady(() => {
   window.__nimroDockSchedule = schedule;
 
   schedule();
+
+  // обычный resize (иногда не срабатывает на zoom)
   window.addEventListener('resize', schedule, { passive: true });
+
+  // scroll тоже может менять положение anchor относительно viewport
+  window.addEventListener('scroll', schedule, { passive: true });
+
+  // zoom в Chrome/Edge чаще всего дергает visualViewport, а не window.resize
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', schedule, { passive: true });
+    window.visualViewport.addEventListener('scroll', schedule, { passive: true });
+  }
+
+  // на всякий случай при смене вкладки/возврате в окно
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) schedule();
+  }, { passive: true });
 });
+
+// FIX: при клике по выпадающим спискам фильтров не выделять/копировать текст вокруг
+onReady(() => {
+  const filters = document.querySelector('.filters');
+  if (!filters) return;
+
+  filters.addEventListener('mousedown', (e) => {
+    const t = e.target;
+    if (!t) return;
+
+    // селект / опции / инпуты внутри блока фильтров
+    const tag = (t.tagName || '').toUpperCase();
+    if (tag === 'SELECT' || tag === 'OPTION' || tag === 'INPUT' || tag === 'TEXTAREA') {
+      const sel = window.getSelection ? window.getSelection() : null;
+      if (sel && sel.removeAllRanges) sel.removeAllRanges();
+    }
+  }, true);
+});
+
+

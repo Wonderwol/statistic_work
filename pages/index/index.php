@@ -209,7 +209,7 @@ require_once __DIR__ . '/data.php';
                                 ? '(' . $years[0] . ')'
                                 : '(' . $years[0] . '–' . $years[count($years) - 1] . ')' ?>
                         </h3>
-                        <div class="chart-subnote">Итого по каждому году показано над столбиком, доли — в подсказке.</div>
+                        <div class="chart-subnote">Итого по каждому году показано справа от столбика, доли — в подсказке.</div>
                     </div>
 
                     <div id="structureLegend" class="chart-legend" aria-label="Легенда структуры"></div>

@@ -125,6 +125,11 @@ body.view-table .dashboard__side{
   max-height: none;
   overflow: visible;
 
+  /* запрет “съезжаний/вылезаний” */
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+
   z-index: var(--nimro-dock-z);
 
   padding: 12px;
@@ -148,3 +153,61 @@ body.view-table .dashboard__side{
   }
 }
 
+.stats-dock--inline{
+  position: static;
+  right: auto;
+  top: auto;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  z-index: auto;
+}
+
+/* на узких экранах — уводим в поток (иначе будет мешать) */
+@media (max-width: 920px){
+  .stats-dock--floating{
+    position: static;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    margin-top: 12px;
+  }
+}
+
+/* ==========================
+   FIX: не выделять текст при клике по фильтрам
+   ========================== */
+
+/* Запрещаем выделение на “декоративных” блоках */
+.stats-dock,
+.stats-dock *,
+.statistics,
+.statistics *,
+.stat-card,
+.stat-card *,
+.chart-container,
+.chart-container *,
+.chart-box,
+.chart-box *,
+.chart-legend,
+.chart-legend *,
+.page-head,
+.page-head *,
+.breadcrumbs,
+.breadcrumbs * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Но на формах (включая select) — выделение/работа как обычно */
+.filters select,
+.filters option,
+.filters input,
+.filters textarea,
+.filters button,
+.filters label,
+.filters .form-control,
+.filters .form-select {
+  -webkit-user-select: auto;
+  user-select: auto;
+}

@@ -65,9 +65,14 @@ function initFilter(filterName, config) {
       }
     });
 
+    // Стрелку (треугольник) рисуем CSS-псевдоэлементом справа,
+    // поэтому в value держим только текст — так он не выделяется/не «прыгает».
     if (selectedText.length > 0) {
-      if (filterName === 'year' && selectedText.length > 3) searchInput.value = `Выбрано ${selectedText.length} лет ▼`;
-      else searchInput.value = selectedText.join(', ') + ' ▼';
+      if (filterName === 'year' && selectedText.length > 3) {
+        searchInput.value = `Выбрано ${selectedText.length} лет`;
+      } else {
+        searchInput.value = selectedText.join(', ');
+      }
     } else {
       searchInput.value = config.placeholder;
     }

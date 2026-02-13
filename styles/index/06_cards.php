@@ -265,15 +265,8 @@
   line-height: 1;
 }
 
-/* ===== Общий блок карточек (dock) коричневый, карточки белые ===== */
-.stats-dock{
-  background: var(--primary-color);
-  border-radius: var(--border-radius);
-  padding: 12px;
-  box-shadow: var(--shadow);
-}
+/* ===== Dock (сводка справа) ===== */
 
-/* Заголовок блока (если есть) — белый */
 .stats-dock__head{
   font-weight: 900;
   font-size: 13px;
@@ -282,7 +275,6 @@
   margin: 2px 2px 10px 2px;
 }
 
-/* Сетка карточек внутри dock */
 .stats-dock__list{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -293,24 +285,28 @@
   .stats-dock__list{ grid-template-columns: 1fr; }
 }
 
-/* Все карточки внутри dock — белые */
+/* Все карточки внутри dock — белые, без hover-движения */
 .stats-dock .stat-card{
-  background: #fff !important;
+  background: #fff;
   border: 1px solid rgba(0,0,0,.08);
-  border-top: 3px solid rgba(255,255,255,.0);
-  border-radius: var(--border-radius);
+  border-top: 0;
+  box-shadow: none;
 
   padding: 10px 12px;
+  border-radius: 12px;
+
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+
+  transition: none;
 }
 
 .stats-dock .stat-card:hover{
   transform: none;
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 
 .stats-dock .stat-card h3{
@@ -331,7 +327,7 @@
   color: var(--primary-color);
 }
 
-/* "Всего ОО" — тоже белая, но на всю ширину */
+/* "ОО всего" — на всю ширину и по центру */
 .stats-dock .stat-card--dock-total{
   grid-column: 1 / -1;
   flex-direction: column;
@@ -339,6 +335,7 @@
   align-items: center;
   text-align: center;
   min-height: 96px;
+  padding: 14px 12px;
 }
 
 .stats-dock .stat-card--dock-total h3{
@@ -351,7 +348,7 @@
 
 .stats-dock .stat-card--dock-total .stat-value{
   font-size: 30px;
-  color: var(--primary-color);
 }
+
 
 

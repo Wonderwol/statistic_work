@@ -2,10 +2,31 @@
   position: relative;
 }
 
+/* Стрелка справа (визуальная, не часть текста) */
+.dropdown-search-container::after{
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid rgba(109, 68, 75, 0.9);
+  pointer-events: none;
+}
+
+/* Когда открыт дропдаун — можно чуть повернуть */
+.dropdown-search-container.active::after{
+  transform: translateY(-50%) rotate(180deg);
+}
+
 /* Поле "поиска/выбора" */
 .dropdown-search-input {
   width: 100%;
-  padding: clamp(10px, 0.6vw + 8px, 12px) clamp(12px, 0.8vw + 10px, 15px);
+  /* + место под стрелку справа */
+  padding: clamp(10px, 0.6vw + 8px, 12px) 40px clamp(10px, 0.6vw + 8px, 12px) clamp(12px, 0.8vw + 10px, 15px);
   border: 2px solid var(--medium-gray);
   border-radius: var(--border-radius);
   font-size: clamp(13px, 0.3vw + 12px, 14px);
@@ -13,6 +34,13 @@
   background-color: var(--white);
   cursor: pointer;
   transition: var(--transition);
+}
+
+/* Не даём выделять текст в readonly-инпутах фильтров */
+.dropdown-search-input[readonly]{
+  -webkit-user-select: none;
+  user-select: none;
+  caret-color: transparent;
 }
 
 .dropdown-search-input:hover {
@@ -162,7 +190,6 @@
   border-left-color: var(--primary-color);
 }
 
-
 .dropdown-checkbox-group .checkbox-item.selected {
   background-color: var(--primary-light);
   border-left: 3px solid var(--primary-color);
@@ -221,4 +248,3 @@
   font-size: 13px;
   display: none;
 }
-
