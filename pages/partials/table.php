@@ -29,43 +29,33 @@ declare(strict_types=1);
         </tr>
 
         <tr>
-            <td style="font-weight:bold; padding-left: 9%;">всего СОШ</td>
+            <td style="font-weight:bold; padding-left: 9%;">СОШ, из них:</td>
             <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['sec_sc_sum'] ?></td><?php endforeach; ?>
         </tr>
 
         <tr>
-            <td style="font-weight:bold; padding-left: 9%;">СОШ</td>
-            <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Secondary_school'] ?></td><?php endforeach; ?>
+            <td style="font-style: italic; padding-left: 18%;">СОШ</td>
+            <?php foreach ($yearsTable as $y): ?><td style="text-align:center; font-style: italic;"><?= (int)$tableByYear[$y]['Secondary_school'] ?></td><?php endforeach; ?>
         </tr>
 
         <tr>
-            <td style="font-weight:bold; padding-left: 9%;">СОШ с УИОП</td>
-            <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Secondary_school_special'] ?></td><?php endforeach; ?>
+            <td style="font-style: italic; padding-left: 18%;">СОШ с УИОП</td>
+            <?php foreach ($yearsTable as $y): ?><td style="text-align:center; font-style: italic;"><?= (int)$tableByYear[$y]['Secondary_school_special'] ?></td><?php endforeach; ?>
         </tr>
 
         <tr>
-            <td style="font-weight:bold; padding-left: 9%;">гимназии</td>
-            <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Gymnasium'] ?></td><?php endforeach; ?>
+            <td style="font-style: italic; padding-left: 18%;">гимназии</td>
+            <?php foreach ($yearsTable as $y): ?><td style="text-align:center; font-style: italic;"><?= (int)$tableByYear[$y]['Gymnasium'] ?></td><?php endforeach; ?>
         </tr>
 
         <tr>
-            <td style="font-weight:bold; padding-left: 9%;">лицеи</td>
-            <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Lyceum'] ?></td><?php endforeach; ?>
+            <td style="font-style: italic; padding-left: 18%;">лицеи</td>
+            <?php foreach ($yearsTable as $y): ?><td style="text-align:center; font-style: italic;"><?= (int)$tableByYear[$y]['Lyceum'] ?></td><?php endforeach; ?>
         </tr>
 
         <tr>
-            <td style="font-weight:bold; padding-left: 9%;">кадетские корпуса</td>
-            <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Cadet_corps'] ?></td><?php endforeach; ?>
-        </tr>
-
-        <tr>
-            <td style="font-weight:bold; padding-left: 9%;">филиалы</td>
-            <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Branches'] ?></td><?php endforeach; ?>
-        </tr>
-
-        <tr class="rowbr" style="background-color:#6d444b; color:#fff; font-weight:bold;">
-            <td style="padding-left:9%;">итого ОО</td>
-            <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Total_organizations'] ?></td><?php endforeach; ?>
+            <td style="font-style: italic; padding-left: 18%;">кадетские корпуса</td>
+            <?php foreach ($yearsTable as $y): ?><td style="text-align:center; font-style: italic;"><?= (int)$tableByYear[$y]['Cadet_corps'] ?></td><?php endforeach; ?>
         </tr>
 
         <tr>
@@ -78,16 +68,19 @@ declare(strict_types=1);
             <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Special_needs_schools'] ?></td><?php endforeach; ?>
         </tr>
 
-        <tr class='rowbr' style="background-color:#6d444b; color:#fff; font-weight:bold;">
-            <td style="padding-left:9%;">итого дневные ОО</td>
-            <?php foreach ($yearsTable as $y): ?>
-                <td style="text-align:center;"><?= (int)$tableByYear[$y]['Total_organizations'] - (int)$tableByYear[$y]['Evening_schools'] ?></td>
-            <?php endforeach; ?>
-        </tr>
-
         <tr>
             <td style="font-weight:bold; padding-left: 9%;">вечерние ОО</td>
             <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Evening_schools'] ?></td><?php endforeach; ?>
+        </tr>
+
+        <tr class="row-total">
+            <td style="padding-left:9%;">итого ОО</td>
+            <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Total_organizations'] ?></td><?php endforeach; ?>
+        </tr>
+
+        <tr>
+            <td style="font-style: italic; padding-left: 9%;">кроме того, филиалы</td>
+            <?php foreach ($yearsTable as $y): ?><td style="text-align:center; font-style: italic;"><?= (int)$tableByYear[$y]['Branches'] ?></td><?php endforeach; ?>
         </tr>
         </tbody>
     </table>

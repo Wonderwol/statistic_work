@@ -104,6 +104,6 @@ declare(strict_types=1);
 
     <div class="buttons">
         <button type="submit" class="btn-primary">Применить фильтры</button>
-        <button type="button" class="btn-secondary" onclick="window.location.href='index.php'">Сбросить</button>
+        <button type="button" class="btn-secondary" onclick="window.location.href='by_type.php'">Сбросить</button>
     </div>
 </form>

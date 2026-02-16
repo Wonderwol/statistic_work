@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 $docRoot = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
-require_once $docRoot . '/v3/config/config.php';
+require_once $docRoot . '/statistics/config/config.php';
 require_once __DIR__ . '/data.php';
 ?>
 
@@ -16,19 +16,19 @@ require_once __DIR__ . '/data.php';
     <title>Открытая статистика образовательных организаций</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <?php
-        include $docRoot . '/v3/styles/style_index.php';
-        include $docRoot . '/v3/styles/shared/style_footer.php';
-        include $docRoot . '/v3/styles/shared/style_header.php';
-        include $docRoot . '/v3/styles/shared/style_nav_left.php';  // НАВИГАЦИОННАЯ ПАНЕЛЬ
+        include $docRoot . '/statistics/styles/style_by_type.php';
+        include $docRoot . '/statistics/styles/shared/style_footer.php';
+        include $docRoot . '/statistics/styles/shared/style_header.php';
+        include $docRoot . '/statistics/styles/shared/style_nav_left.php';  // НАВИГАЦИОННАЯ ПАНЕЛЬ
         require_once __DIR__ . '/js_payload.php';
     ?> <!----ПОДКЛЮЧЕНИЕ JS-СКРИПТА----->
 
-    <link rel="icon" type="image/png" sizes="16x16" href="/v3/src/img/favicon16x16.png"> <!-- Иконка вкладки браузера -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/statistics/src/img/favicon16x16.png"> <!-- Иконка вкладки браузера -->
 </head>
 <body>
     <?php 
-    include $docRoot . '/v3/pages/shared/header.php';
-    include $docRoot . '/v3/nav/nav_left.php'; 
+    include $docRoot . '/statistics/pages/shared/header.php';
+    include $docRoot . '/statistics/nav/nav_left.php'; 
     ?> <!-- HEADER -->     <!-- Навигационная панель -->    <!---- ОТНОСИТЕЛЬНЫЙ ПУТЬ---->
      
         <!-- Основной контент -->
@@ -55,7 +55,7 @@ require_once __DIR__ . '/data.php';
                 $crumbs[] = '<a href="' . $baseUrl . '/statistics/">Статистика и аналитика</a>';
 
                 // Проверяем, находимся ли в open или в index файле
-                if (strpos($currentPath, 'open') !== false || basename($scriptPath) === 'index.php') {
+                if (strpos($currentPath, 'open') !== false || basename($scriptPath) === 'by_type.php') {
                     $crumbs[] = '<a href="' . $baseUrl . '/statistics/open/">Открытая статистика</a>';
                 }
             }
@@ -75,8 +75,8 @@ require_once __DIR__ . '/data.php';
                 </h1>
 
                 <div class="page-head__actions">
-                    <a href="/v3/pages/info.php" class="info-link" style="margin-top: 2px;">
-                        <img src="/v3/src/img/info.png" alt="Информация">
+                    <a href="/statistics/pages/info.php" class="info-link" style="margin-top: 2px;">
+                        <img src="/statistics/src/img/info.png" alt="Информация">
                     </a>
 
                     <button id="showCardsBtn" class="view-btn active" onclick="showCards()">график</button>
@@ -123,38 +123,69 @@ require_once __DIR__ . '/data.php';
                     </div>
                 </div>
                 
-                <!-- Учебный год (чекбоксы) -->
-                <div class="filter-group">
-                    <div class="dropdown-search-container" id="year-container">
-                        <input type="text" 
-                            class="dropdown-search-input" 
-                            placeholder="Выберите год/годы..." 
-                            id="year-search"
-                            readonly
-                            style="cursor: pointer;">
-                        
-                        <div class="selected-count" id="year-selected-count">
-                            Выбрано: <span id="year-count">0</span>
-                            <span class="clear-selection" id="year-clear">(очистить)</span>
-                            <span style="float: right;" class="select-all" id="year-select-all">Выбрать все</span>
-                        </div>
-                        
-                        <div class="dropdown-checkbox-group" id="year-group">
-                            <?php foreach ($years_data as $year): ?>
-                                <div class="checkbox-item" data-year-id="<?= safeEcho($year['id']) ?>">
-                                    <input type="checkbox" 
-                                        id="year_<?= safeEcho($year['id']) ?>" 
-                                        name="year_id[]" 
-                                        value="<?= safeEcho($year['id']) ?>"
-                                        <?= (is_array($year_ids) && in_array($year['id'], $year_ids)) ? 'checked' : '' ?>>
-                                    <label for="year_<?= safeEcho($year['id']) ?>">
-                                        <?= safeEcho($year['name']) ?>
-                                    </label>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
+                <!-- Учебный год (чекбоксы) — ТОЛЬКО для таблицы -->
+<div class="filter-group" id="year-filter-table">
+    <div class="dropdown-search-container" id="year-container">
+        <input type="text"
+               class="dropdown-search-input"
+               placeholder="Выберите год/годы..."
+               id="year-search"
+               readonly
+               style="cursor: pointer;">
+
+        <div class="selected-count" id="year-selected-count">
+            Выбрано: <span id="year-count">0</span>
+            <span class="clear-selection" id="year-clear">(очистить)</span>
+            <span style="float: right;" class="select-all" id="year-select-all">Выбрать все</span>
+        </div>
+
+        <div class="dropdown-checkbox-group" id="year-group">
+            <?php foreach ($years_data as $year): ?>
+                <div class="checkbox-item" data-year-id="<?= safeEcho($year['id']) ?>">
+                    <input type="checkbox"
+                           id="year_<?= safeEcho($year['id']) ?>"
+                           name="year_id[]"
+                           value="<?= safeEcho($year['id']) ?>"
+                           <?= (is_array($year_ids) && in_array($year['id'], $year_ids, true)) ? 'checked' : '' ?>>
+                    <label for="year_<?= safeEcho($year['id']) ?>">
+                        <?= safeEcho($year['name']) ?>
+                    </label>
                 </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</div>
+
+<!-- Учебный год (radio) — ТОЛЬКО для графика -->
+<div class="filter-group" id="chart-year-filter" style="display:none;">
+    <div class="dropdown-search-container" id="chart_year-container">
+        <input type="text"
+               class="dropdown-search-input"
+               placeholder="Год для графика..."
+               id="chart_year-search"
+               readonly
+               style="cursor: pointer;">
+
+        <div class="selected-count" id="chart_year-selected-count">
+            <span class="clear-selection" id="chart_year-clear">(очистить)</span>
+        </div>
+
+        <div class="dropdown-checkbox-group" id="chart_year-group">
+            <?php foreach ($years_data as $year): ?>
+                <div class="checkbox-item" data-chart-year-id="<?= safeEcho($year['id']) ?>">
+                    <input type="radio"
+                           id="chart_year_<?= safeEcho($year['id']) ?>"
+                           name="chart_year_id"
+                           value="<?= safeEcho($year['id']) ?>"
+                           <?= ((string)($chart_year_id ?? '') === (string)$year['id']) ? 'checked' : '' ?>>
+                    <label for="chart_year_<?= safeEcho($year['id']) ?>">
+                        <?= safeEcho($year['name']) ?>
+                    </label>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</div>
                 
                 <!-- Тип местности (радиокнопки) -->
                 <div class="filter-group">
@@ -190,7 +221,7 @@ require_once __DIR__ . '/data.php';
                
                 <div class="buttons">
                     <button type="submit" class="btn-primary">Применить фильтры</button>
-                    <button type="button" class="btn-secondary" onclick="window.location.href='index.php'">Сбросить</button>  <!-- ЗАМЕНИТЬ ПРИ СМЕНЕ ИМЕНИ ФАЙЛА -->
+                    <button type="button" class="btn-secondary" onclick="window.location.href='by_type.php'">Сбросить</button>  <!-- ЗАМЕНИТЬ ПРИ СМЕНЕ ИМЕНИ ФАЙЛА -->
                 </div>
             </form>
         </div>
@@ -222,97 +253,8 @@ require_once __DIR__ . '/data.php';
         </div>
 
         <!-- Таблица -->
-        <div class="results" id="tableView" style="margin-top: 20px; display: none;">
-            <table>
-                <thead>
-                <tr>
-                    <th style="font-weight: bold;">Образовательные организации</th>
-                    <?php foreach ($yearsTable as $y): ?>
-                        <th style="text-align:center; font-weight:bold;"><?= safeEcho($y) ?></th>
-                    <?php endforeach; ?>
-                </tr>
-                </thead>
-
-                <tbody>
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">НОШ д/сад</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Nursery_school_primary'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">НОШ</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Primary_school'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">ООШ</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Basic_school'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">всего СОШ</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['sec_sc_sum'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">СОШ</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Secondary_school'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">СОШ с УИОП</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Secondary_school_special'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">гимназии</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Gymnasium'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">лицеи</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Lyceum'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">кадетские корпуса</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Cadet_corps'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">филиалы</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Branches'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr class="row-total">
-                    <td style="padding-left:9%;">итого ОО</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Total_organizations'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">санаторные ОО</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Sanatorium_schools'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">ОО для детей с ОВЗ</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Special_needs_schools'] ?></td><?php endforeach; ?>
-                </tr>
-
-                <tr class="row-total">
-                    <td style="padding-left:9%;">итого дневные ОО</td>
-                    <?php foreach ($yearsTable as $y): ?>
-                        <td style="text-align:center;"><?= (int)$tableByYear[$y]['Total_organizations'] - (int)$tableByYear[$y]['Evening_schools'] ?></td>
-                    <?php endforeach; ?>
-                </tr>
-
-                <tr>
-                    <td style="font-weight:bold; padding-left: 9%;">вечерние ОО</td>
-                    <?php foreach ($yearsTable as $y): ?><td style="text-align:center;"><?= (int)$tableByYear[$y]['Evening_schools'] ?></td><?php endforeach; ?>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+        
+        <?php include $docRoot . '/statistics/pages/partials/table.php'; ?>
 
         <br>
 
@@ -330,7 +272,7 @@ require_once __DIR__ . '/data.php';
         $emptyIcon = '📝';
         $emptyTitle = 'Организации не найдены';
         $emptyMessage = 'Измените параметры фильтрации или добавьте данные в систему.';
-        include $docRoot . '/v3/pages/shared/empty_state.php';
+        include $docRoot . '/statistics/pages/shared/empty_state.php';
     ?>
 <?php endif; ?>
 
@@ -341,21 +283,30 @@ require_once __DIR__ . '/data.php';
     <?php if (!empty($organizations)): ?>
 <aside id="statsDock" class="stats-dock" aria-label="Сводка по типам организаций">
     <?php
-    $total_all = 0;
-    foreach ($organizations as $org) {
-        $total_all += isset($org['Total_organizations']) ? (int)$org['Total_organizations'] : 0;
-    }
+        /**
+         * ВАЖНО:
+         * - таблица может быть по нескольким годам (year_id[])
+         * - график и карточки должны быть строго по одному году (chart_year_id)
+         *
+         * Поэтому карточки берём из агрегата $tableByYear по году графика,
+         * а НЕ суммируем весь массив $organizations (там могут быть несколько лет).
+         */
+        $cardsYear = (isset($years[0]) && (string)$years[0] !== '') ? (string)$years[0] : (string)($yearPeriod ?? '');
+        $cardsRow  = ($cardsYear !== '' && isset($tableByYear[$cardsYear]) && is_array($tableByYear[$cardsYear]))
+            ? $tableByYear[$cardsYear]
+            : [];
 
-    $nursery  = (int)array_sum(array_map('intval', array_column($organizations, 'Nursery_school_primary')));
-    $primary  = (int)array_sum(array_map('intval', array_column($organizations, 'Primary_school')));
-    $basic    = (int)array_sum(array_map('intval', array_column($organizations, 'Basic_school')));
-    $secSum   = (int)array_sum(array_map('intval', array_column($organizations, 'sec_sc_sum')));
-    $sanat    = (int)array_sum(array_map('intval', array_column($organizations, 'Sanatorium_schools')));
-    $ovz      = (int)array_sum(array_map('intval', array_column($organizations, 'Special_needs_schools')));
-    $evening  = (int)array_sum(array_map('intval', array_column($organizations, 'Evening_schools')));
-    $branches = (int)array_sum(array_map('intval', array_column($organizations, 'Branches')));
+        $total_all = (int)($cardsRow['Total_organizations'] ?? 0);
+        $nursery   = (int)($cardsRow['Nursery_school_primary'] ?? 0);
+        $primary   = (int)($cardsRow['Primary_school'] ?? 0);
+        $basic     = (int)($cardsRow['Basic_school'] ?? 0);
+        $secSum    = (int)($cardsRow['sec_sc_sum'] ?? 0);
+        $sanat     = (int)($cardsRow['Sanatorium_schools'] ?? 0);
+        $ovz       = (int)($cardsRow['Special_needs_schools'] ?? 0);
+        $evening   = (int)($cardsRow['Evening_schools'] ?? 0);
+        $branches  = (int)($cardsRow['Branches'] ?? 0);
 
-    function nf($v){ return number_format((int)$v, 0, '.', ' '); }
+        function nf($v){ return number_format((int)$v, 0, '.', ' '); }
     ?>
 
     <div class="stats-dock__head">Типы организаций</div>
@@ -410,8 +361,8 @@ require_once __DIR__ . '/data.php';
 <?php endif; ?>
 
     <?php
-        include $docRoot . '/v3/pages/shared/footer.php';
-        include $docRoot . '/v3/scripts/index/index_script.php';
+        include $docRoot . '/statistics/pages/shared/footer.php';
+        include $docRoot . '/statistics/scripts/edu_orgs/by_type_script.php';
     ?>
 </body>
 </html>

@@ -22,6 +22,30 @@
   transform: translateY(-50%) rotate(180deg);
 }
 
+/* =========================================================
+   Запрещаем выделение текста в фильтрах (выбранное + выпадашки)
+   ========================================================= */
+.filters .filter-row,
+.filters .filter-row * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  /* iOS/мобилки: отключаем “лупу/контекст” при долгом тапе */
+  -webkit-touch-callout: none;
+}
+
+/* Инпуты чекбоксов/радио оставляем кликабельными (на всякий случай) */
+.filters .filter-row input[type="checkbox"],
+.filters .filter-row input[type="radio"] {
+  -webkit-user-select: auto;
+  -moz-user-select: auto;
+  -ms-user-select: auto;
+  user-select: auto;
+}
+
+
 /* Поле "поиска/выбора" */
 .dropdown-search-input {
   width: 100%;

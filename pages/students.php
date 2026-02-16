@@ -136,7 +136,7 @@ $total_foreign = array_sum(array_column(
             
             <button type="submit">Применить фильтры</button>
             <button type="button" onclick="window.location.href='students.php'">Сбросить</button>
-            <a href="index.php" style="margin-left: 20px;">← Назад</a>
+            <a href="/statistics/pages/edu_orgs/by_type.php" style="margin-left: 20px;">← Назад</a>
         </form>
     </div>
     

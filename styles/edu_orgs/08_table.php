@@ -84,3 +84,19 @@
   color:#fff;
   font-weight:bold;
 }
+
+/* Жирный шрифт только для заголовков и "итого" */
+#tableView th,
+#tableView td{
+  font-weight: 400 !important; /* все строки обычным */
+}
+
+#tableView thead th{
+  font-weight: 700 !important; /* заголовки жирным */
+}
+
+#tableView tbody tr.row-total td,
+#tableView tbody tr.row-total th{
+  font-weight: 700 !important; /* "итого ОО" жирным */
+}
+

@@ -53,6 +53,7 @@ function nimro_detect_total_area(PDO $pdo, string $yearPeriod, int $areaTypeCode
 $org_types = $_GET['org_type'] ?? [];
 $year_ids = $_GET['year_id'] ?? [];
 $locality_types = $_GET['locality_type'] ?? [];
+$chart_year_id = (string)($_GET['chart_year_id'] ?? '');
 
 // приводим к массивам (у radio обычно строка)
 if (!is_array($org_types) && $org_types !== '') $org_types = [$org_types];
@@ -149,10 +150,17 @@ if ((!isset($_GET['org_type']) || empty($org_types)) && $totalAreaCode !== null)
     $org_types = [$totalAreaCode];
 }
 
-// 3) Основные данные (организации)
+// Год(а) для таблицы остаются в $year_ids (чекбоксы).
+// Для запроса в БД добавляем ещё chart_year_id (если его нет среди year_id[]),
+// чтобы график всегда имел данные.
+$year_ids_query = $year_ids;
+if ($chart_year_id !== '' && !in_array($chart_year_id, $year_ids_query, true)) {
+    $year_ids_query[] = $chart_year_id;
+}
+
 $organizations = index_fetch_organizations($pdo, [
     'org_type'      => $org_types,
-    'year_id'       => $year_ids,
+    'year_id'       => $year_ids_query,
     'locality_type' => $locality_types
 ]);
 
@@ -254,9 +262,18 @@ foreach ($organizations as $row) {
 }
 sort($yearsTable);
 
+$yearsTable = array_values(array_unique(array_map('strval', $year_ids)));
+sort($yearsTable);
+
+// Если chart_year_id не выбран — по умолчанию берём самый свежий из выбранных для таблицы
+if ($chart_year_id === '' && !empty($yearsTable)) {
+    $chart_year_id = (string)end($yearsTable);
+    reset($yearsTable);
+}
+
 // 6) Данные для графиков
-$years = $yearsTable;
-$show_single_year_charts = (count($years) === 1);
+$years = ($chart_year_id !== '') ? [$chart_year_id] : $yearsTable;
+$show_single_year_charts = true;
 
 $totalOrganizations = [];
 $nurseryData = [];

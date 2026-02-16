@@ -1,3 +1,18 @@
+  // Добивка: не даём браузеру стартовать выделение текста при mousedown внутри фильтров
+  const filterRow = document.querySelector('.filters .filter-row');
+  if (filterRow) {
+    filterRow.addEventListener('mousedown', function (e) {
+      const el = (e.target instanceof Element) ? e.target : e.target?.parentElement;
+      if (!el) return;
+
+      // На сами checkbox/radio не лезем
+      if (el.closest('input[type="checkbox"], input[type="radio"]')) return;
+
+      e.preventDefault();
+    }, { passive: false });
+  }
+
+
 const filtersConfig = {
   org_type: {
     isRadio: true,
@@ -16,6 +31,14 @@ const filtersConfig = {
     containerId: 'year-container',
     selectAllId: 'year-select-all',
     placeholder: 'Учебный год'
+  },
+  chart_year: {
+    isRadio: true,
+    searchId: 'chart_year-search',
+    groupId: 'chart_year-group',
+    clearId: 'chart_year-clear',
+    containerId: 'chart_year-container',
+    placeholder: 'Учебный год (график)'
   },
   locality: {
     isRadio: true,

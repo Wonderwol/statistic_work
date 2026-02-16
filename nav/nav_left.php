@@ -35,9 +35,10 @@ function nav_disabled_attrs(): string {
             <summary>Сеть образовательных организаций</summary>
             <ul class="nav-menu">
                 <li>
-                    <a class="<?= trim(nav_active('/v3/pages/index/index.php', $uri)) ?>" href="/v3/pages/index/index.php">
+                    <a class="<?= trim(nav_active('/statistics/pages/edu_orgs/by_type.php', $uri)) ?>"
+                       href="/statistics/pages/edu_orgs/by_type.php">
                         <span class="nav-ico">ОО</span>
-                        <span class="nav-txt">Сеть образовательных организаций</span>
+                        <span class="nav-txt">Сеть образовательных организаций</span>  <!-- ВОТ СЮДА ВСТАВЛЯТЬ ПОДРАЗДЕЛ -->
                     </a>
                 </li>
             </ul>
@@ -47,7 +48,8 @@ function nav_disabled_attrs(): string {
             <summary>Обучающиеся образовательных организаций</summary>
             <ul class="nav-menu">
                 <li>
-                    <a class="<?= trim(nav_active('/v3/pages/students.php', $uri)) ?>" href="/v3/pages/students.php">
+                    <a class="<?= trim(nav_active('/statistics/pages/students.php', $uri)) ?>"
+                       href="/statistics/pages/students.php">
                         <span class="nav-ico">👨‍🎓</span>
                         <span class="nav-txt">Обучающиеся (сводная страница)</span>
                     </a>

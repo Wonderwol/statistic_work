@@ -1,5 +1,5 @@
 <?php
-// /v3/scripts/index/index_script.php
+// statistics\scripts\edu_orgs\by_type_script.php
 ?>
 <script>
 (function () {

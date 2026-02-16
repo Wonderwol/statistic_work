@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 $docRoot = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
-require_once $docRoot . '/v3/config/config.php';
+require_once $docRoot . '/statistics/config/config.php';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -13,17 +13,17 @@ require_once $docRoot . '/v3/config/config.php';
 
     <?php
     // Берём общий визуальный стиль витрины (карточки/контейнер/типографика)
-    include $docRoot . '/v3/styles/style_index.php';
+    include $docRoot . '/statistics/styles/style_by_type.php';
 
     // Хедер/футер (у тебя уже вынесены)
-    include $docRoot . '/v3/styles/shared/style_header.php';
-    include $docRoot . '/v3/styles/shared/style_footer.php';
+    include $docRoot . '/statistics/styles/style_by_type.php';
+    include $docRoot . '/statistics/styles/shared/style_footer.php';
 
     // Если левое меню используешь везде — подключи его стили здесь
-    include $docRoot . '/v3/styles/shared/style_nav_left.php';
+    include $docRoot . '/statistics/styles/shared/style_nav_left.php';
     ?>
 
-    <link rel="icon" type="image/png" sizes="16x16" href="/v3/src/img/favicon16x16.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/statistics/src/img/favicon16x16.png">
 
     <style>
         /* Локальные правки под страницу справки */
@@ -63,8 +63,8 @@ require_once $docRoot . '/v3/config/config.php';
 <body>
 
 <?php
-include $docRoot . '/v3/pages/shared/header.php';
-include $docRoot . '/v3/nav/nav_left.php';
+include $docRoot . '/statistics/pages/shared/header.php';
+include $docRoot . '/statistics/nav/nav_left.php';
 ?>
 
 <div class="content-area">
@@ -76,7 +76,7 @@ include $docRoot . '/v3/nav/nav_left.php';
             </div>
 
             <span class="info-badge">
-                <img src="/v3/src/img/info.png" alt="Информация">
+                <img src="/statistics/src/img/info.png" alt="Информация">
                 Данные в разделе обновляются ежегодно.
             </span>
 
@@ -97,8 +97,8 @@ include $docRoot . '/v3/nav/nav_left.php';
             </div>
 
             <div style="margin-top: 16px;">
-                <a class="doc-link" href="/v3/src/pdf/test.pdf" target="_blank" rel="noopener">
-                    <img src="/v3/src/img/info.png" alt="PDF">
+                <a class="doc-link" href="/statistics/src/pdf/test.pdf" target="_blank" rel="noopener">
+                    <img src="/statistics/src/img/info.png" alt="PDF">
                     <span>Инструкция для пользователя (PDF)</span>
                 </a>
             </div>
@@ -108,6 +108,6 @@ include $docRoot . '/v3/nav/nav_left.php';
 
 </div><!-- /.main-wrapper (nav_left открывает main-wrapper) -->
 
-<?php include $docRoot . '/v3/pages/shared/footer.php'; ?>
+<?php include $docRoot . '/statistics/pages/shared/footer.php'; ?>
 </body>
 </html>

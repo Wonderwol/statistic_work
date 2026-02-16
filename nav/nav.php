@@ -16,7 +16,7 @@
                 <div class="nav-section">
                     <div class="nav-section-title">Навигация</div>
                     <ul class="nav-menu">
-                        <li><a href="../pages/index.php">Сеть образовательных организаций</a></li>
+                       <li><a href="/statistics/pages/edu_orgs/by_type.php">Сеть образовательных организаций</a></li>
                         <li><a href="../nav/nav2.php">Обучающиеся образовательных организаций</a></li>
                         <li><a href="../nav/nav3.php">Сотрудники образовательных организаций</a></li>
                         <li><a href="#">Углубленное изучение предметов</a></li>

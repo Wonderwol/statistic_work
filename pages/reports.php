@@ -67,7 +67,7 @@ $reports = [
 </head>
 <body>
     <h1>📈 Отчеты и аналитика</h1>
-    <a href="index.php" class="back-link">← Назад к списку организаций</a>
+    <a href="by_type.php" class="back-link">← Назад к списку организаций</a>
     
     <?php foreach ($reports as $title => $data): ?>
     <div class="report-section">

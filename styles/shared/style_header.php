@@ -15,7 +15,7 @@
     min-height: 255px;
     height: auto;
 
-    background-image: url('/v3/src/img/header_bg.jpg');
+    background-image: url('/statistics/src/img/header_bg.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

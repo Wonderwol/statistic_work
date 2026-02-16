@@ -2,6 +2,11 @@
 window.showCards = function () {
   localStorage.setItem('nimro_open_view', 'cards');
 
+  const yearTableFG = document.getElementById('year-filter-table');
+  const yearChartFG = document.getElementById('chart-year-filter');
+  if (yearTableFG) yearTableFG.style.display = 'none';
+  if (yearChartFG) yearChartFG.style.display = '';
+
   const dock = document.getElementById('statsDock');
   if (dock) dock.style.display = '';
 
@@ -43,6 +48,12 @@ window.showCards = function () {
 window.showTable = function () {
   localStorage.setItem('nimro_open_view', 'table');
 
+  const yearTableFG = document.getElementById('year-filter-table');
+  const yearChartFG = document.getElementById('chart-year-filter');
+  if (yearTableFG) yearTableFG.style.display = '';
+  if (yearChartFG) yearChartFG.style.display = 'none';
+
+
   const dock = document.getElementById('statsDock');
   if (dock) dock.style.display = 'none';
 
@@ -73,12 +84,85 @@ window.exportToExcel = function () {
   const table = document.querySelector('#tableView table');
   if (!table) { alert('Таблица не найдена!'); return; }
 
-  const html =
-    '<html><head><meta charset="UTF-8"></head><body><table border="1">' +
-    table.innerHTML +
-    '</table></body></html>';
+  const cloned = table.cloneNode(true);
 
-  const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+  const INDENT_LEVEL_2 = new Set([
+    'сош',
+    'сош с уиоп',
+    'гимназии',
+    'лицеи',
+    'кадетские корпуса'
+  ]);
+
+  function norm(s) {
+    return String(s ?? '').replace(/\s+/g, ' ').trim();
+  }
+
+  function key(s) {
+    return norm(s).toLowerCase().replace(/[.,:;]+$/g, '');
+  }
+
+  function applyIndentNbsp(td, countNbsp) {
+    const pad = '\u00A0'.repeat(countNbsp);
+    const text = norm(td.textContent);
+    td.textContent = pad + text;
+    td.style.whiteSpace = 'pre';
+    td.style.paddingLeft = '';
+  }
+
+  // 1) Индентация и пометка строки "итого ОО"
+  let totalRow = null;
+
+  cloned.querySelectorAll('tbody tr').forEach((tr) => {
+    const first = tr.querySelector('td:first-child');
+    if (!first) return;
+
+    const k = key(first.textContent);
+
+    if (INDENT_LEVEL_2.has(k)) {
+      applyIndentNbsp(first, 16); // смещение вправо (меняй число при необходимости)
+    }
+
+    if (k === 'итого оо') {
+      totalRow = tr;
+    }
+  });
+
+  // 2) Общие инлайн-стили для Excel + УБРАТЬ жирность везде
+  cloned.setAttribute('border', '1');
+  cloned.style.borderCollapse = 'collapse';
+
+  cloned.querySelectorAll('th, td').forEach((cell) => {
+    cell.style.border = '1px solid #000';
+    cell.style.padding = '4px 6px';
+    cell.style.fontFamily = 'Calibri, Arial, sans-serif';
+    cell.style.fontSize = '11pt';
+    cell.style.whiteSpace = cell.style.whiteSpace || 'pre';
+    cell.style.fontWeight = 'normal'; // ключевое: всё не жирное
+  });
+
+  // 3) Заголовки: коричневый фон + жирный
+  cloned.querySelectorAll('thead th').forEach((th) => {
+    th.style.backgroundColor = '#6d444b';
+    th.style.color = '#ffffff';
+    th.style.fontWeight = 'bold';
+  });
+
+  // 4) "итого ОО": коричневый фон + жирный (после общих стилей, чтобы не перетёрлось)
+  if (totalRow) {
+    totalRow.querySelectorAll('td, th').forEach((cell) => {
+      cell.style.backgroundColor = '#6d444b';
+      cell.style.color = '#ffffff';
+      cell.style.fontWeight = 'bold';
+    });
+  }
+
+  const html =
+    '<html><head><meta charset="UTF-8"></head><body>' +
+    cloned.outerHTML +
+    '</body></html>';
+
+  const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement('a');
@@ -90,26 +174,27 @@ window.exportToExcel = function () {
   URL.revokeObjectURL(url);
 };
 
-/* ===== Позиционирование dock: центрируем относительно графика ===== */
-onReady(() => {
-  const dock = document.getElementById('statsDock');
-  const filters = document.querySelector('.filters');
-  if (!dock || !filters) return;
 
-  let raf = 0;
+  /* ===== Позиционирование dock: центрируем относительно графика ===== */
+  onReady(() => {
+    const dock = document.getElementById('statsDock');
+    const filters = document.querySelector('.filters');
+    if (!dock || !filters) return;
 
-  function getAnchor() {
-    const el =
-      document.querySelector('.chart-box--card') ||
-      document.querySelector('.chart-box') ||
-      document.querySelector('.chart-container');
-    if (!el) return null;
+    let raf = 0;
 
-    const cs = getComputedStyle(el);
-    if (cs.display === 'none' || cs.visibility === 'hidden') return null;
+    function getAnchor() {
+      const el =
+        document.querySelector('.chart-box--card') ||
+        document.querySelector('.chart-box') ||
+        document.querySelector('.chart-container');
+      if (!el) return null;
 
-    return el;
-  }
+      const cs = getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return null;
+
+      return el;
+    }
 
   function recalc() {
     raf = 0;

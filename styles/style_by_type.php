@@ -4,7 +4,7 @@
 
 <style>
     <?php
-        $dir = __DIR__ . '/index';
+        $dir = __DIR__ . '/edu_orgs';
 
         $files = [
             $dir . '/00_tokens.php',

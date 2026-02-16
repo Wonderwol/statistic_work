@@ -15,7 +15,7 @@ $crumbs[] = '<a href="' . $baseUrl . '/" style="color: #6d444b; text-decoration:
 if (strpos($currentDir, 'statistics') !== false) {
     $crumbs[] = '<a href="' . $baseUrl . '/statistics/" style="color: #6d444b; text-decoration: none; opacity: 0.8;">Статистика и аналитика</a>';
 
-    if (strpos($currentPath, 'open') !== false || basename($scriptPath) === 'index.php') {
+    if (strpos($currentPath, 'open') !== false || basename($scriptPath) === 'by_type.php') {
         $crumbs[] = '<a href="' . $baseUrl . '/statistics/open/" style="color: #6d444b; text-decoration: none; opacity: 0.8;">Открытая статистика</a>';
     }
 }
