@@ -4,8 +4,13 @@ window.initializeCharts = function () {
   const pieEl = document.getElementById('pieChart');
   if (!pieEl) return;
 
+  // fmt должен существовать, но на всякий случай делаем безопасный вариант
+  const fmt = (typeof window.fmt !== 'undefined' && window.fmt && typeof window.fmt.format === 'function')
+    ? window.fmt
+    : new Intl.NumberFormat('ru-RU');
+
   const { pieLabels, pieData } = getChartData();
-  
+
   const BAR_COLORS = [
     'rgb(91, 57, 62)',
   ];
@@ -27,10 +32,10 @@ window.initializeCharts = function () {
   // ===== фикс толщины баров + адаптивная высота под количество баров =====
   function nimroGetBarSizing(count) {
     const isMobile = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
-    const barThickness = isMobile ? 18 : 35; // постоянная “толщина”
+    const barThickness = isMobile ? 18 : 35;
     const gap = isMobile ? 10 : 12;
 
-    const extra = isMobile ? 90 : 110; // запас под оси/паддинги
+    const extra = isMobile ? 90 : 110;
     const minH = isMobile ? 260 : 340;
 
     const safeCount = Math.max(1, Number(count) || 1);
@@ -47,11 +52,41 @@ window.initializeCharts = function () {
   const sizing = nimroGetBarSizing(labels.length);
   nimroApplyWrapHeight(pieEl, sizing.height);
 
-  // подписи значений справа от столбика (значение НЕ дублируем в tooltip)
+  // ===== резерв справа под подписи (оставляем подпись у конца столбика) =====
+  const labelCtx = pieEl.getContext('2d');
+  let valuePadRight = 34;
+
+  try {
+    if (labelCtx) {
+      labelCtx.save();
+      labelCtx.font = '800 12px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+
+      let maxW = 0;
+      for (let i = 0; i < values.length; i++) {
+        const v = Number(values[i] ?? 0);
+        if (!Number.isFinite(v) || v <= 0) continue;
+        const t = fmt.format(v);
+        const w = labelCtx.measureText(t).width;
+        if (w > maxW) maxW = w;
+      }
+
+      labelCtx.restore();
+
+      // ширина текста + отступ от конца столбика + небольшой воздух
+      valuePadRight = Math.max(
+        34,
+        Math.ceil(maxW) + (sizing.isMobile ? 18 : 22) + 10
+      );
+    }
+  } catch (e) {
+    valuePadRight = 34;
+  }
+
+  // подписи значений рядом с концом столбика
   const barValueLabels = {
     id: 'barValueLabels',
     afterDatasetsDraw(chart) {
-      const { ctx, chartArea } = chart;
+      const { ctx } = chart;
       const meta = chart.getDatasetMeta(0);
       if (!meta || !meta.data) return;
 
@@ -59,14 +94,23 @@ window.initializeCharts = function () {
       ctx.font = '800 12px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial';
       ctx.fillStyle = 'rgba(44,62,80,0.88)';
       ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
 
       meta.data.forEach((bar, i) => {
         const v = Number(chart.data.datasets[0].data[i] ?? 0);
         if (!Number.isFinite(v) || v <= 0) return;
 
-        const x = Math.min(bar.x + 8, chartArea.right - 6);
-        const y = bar.y;
-        ctx.fillText(fmt.format(v), x, y);
+        const text = fmt.format(v);
+        const textW = ctx.measureText(text).width;
+
+        // рядом с концом столбика
+        let x = bar.x + 8;
+
+        // не даём выйти за край канваса
+        const maxX = (chart.width - 6) - textW;
+        if (x > maxX) x = maxX;
+
+        ctx.fillText(text, x, bar.y);
       });
 
       ctx.restore();
@@ -78,7 +122,7 @@ window.initializeCharts = function () {
     data: {
       labels,
       datasets: [{
-        label: '', // важно: пусто, и легенду отключаем ниже
+        label: '',
         data: values,
         backgroundColor: colors,
         hoverBackgroundColor: colors,
@@ -87,10 +131,8 @@ window.initializeCharts = function () {
         borderRadius: 10,
         borderSkipped: false,
 
-        // минимальная длина столбика (px) для маленьких значений
         minBarLength: sizing.isMobile ? 6 : 10,
 
-        // фикс толщины (чтобы при меньшем числе строк бары не “жирнели”)
         barThickness: sizing.barThickness,
         maxBarThickness: sizing.barThickness,
         categoryPercentage: 1.0,
@@ -99,16 +141,14 @@ window.initializeCharts = function () {
     },
     options: buildOptions({
       indexAxis: 'y',
+      // место справа под подписи — ключевой фикс
+      layout: { padding: { top: 6, right: valuePadRight, bottom: 6, left: 8 } },
       plugins: {
-        // УБИРАЕТ тот самый прямоугольник сверху (легенда)
         legend: { display: false },
-
         tooltip: {
           displayColors: false,
           callbacks: {
-            // убираем заголовок в tooltip полностью
             title: () => '',
-            // оставляем ТОЛЬКО процент
             label: (ctx) => {
               const v = Number(ctx.parsed?.x ?? ctx.raw ?? 0);
               const pct = total ? (v / total * 100) : 0;

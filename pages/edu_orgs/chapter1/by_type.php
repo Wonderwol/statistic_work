@@ -1,10 +1,10 @@
 <?php
-// Абсолютный путь к конфигу
-declare(strict_types=1);
+    // Абсолютный путь к конфигу
+    declare(strict_types=1);
 
-$docRoot = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
-require_once $docRoot . '/statistics/config/config.php';
-require_once __DIR__ . '/data.php';
+    $docRoot = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+    require_once $docRoot . '/statistics/config/config.php';
+    require_once __DIR__ . '/data.php';
 ?>
 
 <!----------------------- HTML --------------------------------->
@@ -13,10 +13,10 @@ require_once __DIR__ . '/data.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Открытая статистика образовательных организаций</title>
+    <title>Состояние сети ОО за учебный год</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <?php
-        include $docRoot . '/statistics/styles/style_by_type.php';
+        include $docRoot . '/statistics/styles/edu_orgs/chapter1/style.php';
         include $docRoot . '/statistics/styles/shared/style_footer.php';
         include $docRoot . '/statistics/styles/shared/style_header.php';
         include $docRoot . '/statistics/styles/shared/style_nav_left.php';  // НАВИГАЦИОННАЯ ПАНЕЛЬ
@@ -36,54 +36,29 @@ require_once __DIR__ . '/data.php';
     <div class="container">
 
         <!-- Хлебные крошки -->
-        <div class="breadcrumbs">
-            <?php
-            // Получаем текущий путь
-            $currentPath = $_SERVER['REQUEST_URI'];
-            $scriptPath = $_SERVER['SCRIPT_NAME'];
-
-            // Определяем базовые пути
-            $baseUrl = 'http://' . $_SERVER['HTTP_HOST'];
-            $currentDir = dirname($scriptPath);
-
-            // Всегда Главная
-            $crumbs = [];
-            $crumbs[] = '<a href="' . $baseUrl . '/">Главная</a>';
-
-            // Проверяем, находимся ли мы в statistics
-            if (strpos($currentDir, 'statistics') !== false) {
-                $crumbs[] = '<a href="' . $baseUrl . '/statistics/">Статистика и аналитика</a>';
-
-                // Проверяем, находимся ли в open или в index файле
-                if (strpos($currentPath, 'open') !== false || basename($scriptPath) === 'by_type.php') {
-                    $crumbs[] = '<a href="' . $baseUrl . '/statistics/open/">Открытая статистика</a>';
-                }
-            }
-
-            // Последний элемент - текущая страница
-            $crumbs[] = '<span>Сеть образовательных организаций</span>';
-
-            // Объединяем с разделителями
-            echo implode('&nbsp;>&nbsp;', $crumbs);
-            ?>
-        </div>
-
+        <?php
+        $breadcrumbs = [
+            ['title' => 'Статистические данные', 'href' => '/statistics/'],
+            ['title' => 'Сеть образовательных организаций', 'href' => '/statistics/pages/edu_orgs/index.php'],
+            ['title' => '1. Состояние сети ОО за учебный год'],
+            ];
+            include $docRoot . '/statistics/pages/partials/breadcrumbs.php';
+        ?>
         <div class="filters">
-            <div class="page-head">
-                <h1 class="page-head__title" style="color:#2c3e50; font-weight:bold;">
-                    Сеть образовательных организаций Новосибирской области
-                </h1>
+           <div class="page-head">
+            <h1 class="page-head__title">Состояние сети ОО за учебный год</h1>
 
-                <div class="page-head__actions">
-                    <a href="/statistics/pages/info.php" class="info-link" style="margin-top: 2px;">
-                        <img src="/statistics/src/img/info.png" alt="Информация">
-                    </a>
+            <div class="page-head__actions">
+                <a href="/statistics/pages/info.php" class="info-link info-link--icon" title="Информация" aria-label="Информация">
+                <img src="/statistics/src/img/info.png" alt="Информация">
+                </a>
 
-                    <button id="showCardsBtn" class="view-btn active" onclick="showCards()">график</button>
-                    <button id="showTableBtn" class="view-btn" onclick="showTable()">таблица</button>
+                <div class="view-controls">
+                <button id="showCardsBtn" type="button" class="view-btn" onclick="window.showCards && window.showCards()">График</button>
+                <button id="showTableBtn" type="button" class="view-btn" onclick="window.showTable && window.showTable()">Таблица</button>
                 </div>
             </div>
-
+            </div>
 			<!-- Информация о данных -->
                 <p style="color: gray; margin: 8px 0 20px 0; font-size: 14px;">
                     Информация по состоянию на: <strong style="color: #6d444b;"><?php echo htmlspecialchars($displayTime); ?></strong>, статистика в % и ед.
@@ -221,7 +196,7 @@ require_once __DIR__ . '/data.php';
                
                 <div class="buttons">
                     <button type="submit" class="btn-primary">Применить фильтры</button>
-                    <button type="button" class="btn-secondary" onclick="window.location.href='by_type.php'">Сбросить</button>  <!-- ЗАМЕНИТЬ ПРИ СМЕНЕ ИМЕНИ ФАЙЛА -->
+                    <button type="button" class="btn-secondary" onclick="window.location.href='/statistics/pages/edu_orgs/chapter1/by_type.php'">Сбросить</button>  <!-- ЗАМЕНИТЬ ПРИ СМЕНЕ ИМЕНИ ФАЙЛА -->
                 </div>
             </form>
         </div>
@@ -265,7 +240,6 @@ require_once __DIR__ . '/data.php';
             </button>
         </div>
 
-    </div>
 
 <?php else: ?>
     <?php
@@ -362,7 +336,8 @@ require_once __DIR__ . '/data.php';
 
     <?php
         include $docRoot . '/statistics/pages/shared/footer.php';
-        include $docRoot . '/statistics/scripts/edu_orgs/by_type_script.php';
+        include $docRoot . '/statistics/scripts/edu_orgs/chapter1/by_type_script.php';
+
     ?>
 </body>
 </html>

@@ -1,27 +1,47 @@
 <?php
 declare(strict_types=1);
-?>
-<div style="margin: 0 0 10px 0; padding: 5px 0; font-size: 13px; color: rgba(0, 0, 0, 0.6);">
-<?php
-$currentPath = $_SERVER['REQUEST_URI'] ?? '';
-$scriptPath  = $_SERVER['SCRIPT_NAME'] ?? '';
 
-$baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? '');
-$currentDir = dirname($scriptPath);
+/**
+ * Ожидает массив:
+ * $breadcrumbs = [
+ *   ['title' => '...', 'href' => '/...'],   // ссылка
+ *   ['title' => '...'],                    // текущая (без ссылки)
+ * ];
+ */
 
-$crumbs = [];
-$crumbs[] = '<a href="' . $baseUrl . '/" style="color: #6d444b; text-decoration: none; opacity: 0.8;">Главная</a>';
-
-if (strpos($currentDir, 'statistics') !== false) {
-    $crumbs[] = '<a href="' . $baseUrl . '/statistics/" style="color: #6d444b; text-decoration: none; opacity: 0.8;">Статистика и аналитика</a>';
-
-    if (strpos($currentPath, 'open') !== false || basename($scriptPath) === 'by_type.php') {
-        $crumbs[] = '<a href="' . $baseUrl . '/statistics/open/" style="color: #6d444b; text-decoration: none; opacity: 0.8;">Открытая статистика</a>';
-    }
+$items = $breadcrumbs ?? [];
+if (!is_array($items) || $items === []) {
+    $items = [
+        ['title' => 'Статистические данные', 'href' => '/statistics/'],
+    ];
 }
 
-$crumbs[] = '<span style="color: rgba(0, 0, 0, 0.7);">Сеть образовательных организаций</span>';
+$out = [];
 
-echo implode('&nbsp;>&nbsp;', $crumbs);
+foreach ($items as $it) {
+    if (is_string($it)) {
+        $title = $it;
+        $href  = null;
+    } elseif (is_array($it)) {
+        $title = (string)($it['title'] ?? '');
+        $href  = $it['href'] ?? null;
+    } else {
+        continue;
+    }
+
+    // Убираем нумерацию в начале: "1. ...", "2. ...", "10. ..."
+    $title = preg_replace('/^\s*\d+\.\s*/u', '', $title);
+
+    $titleEsc = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+
+    if (is_string($href) && $href !== '') {
+        $hrefEsc = htmlspecialchars($href, ENT_QUOTES, 'UTF-8');
+        $out[] = '<a href="' . $hrefEsc . '">' . $titleEsc . '</a>';
+    } else {
+        $out[] = '<span>' . $titleEsc . '</span>';
+    }
+}
 ?>
+<div class="breadcrumbs">
+    <?= implode('&nbsp;>&nbsp;', $out) ?>
 </div>

@@ -272,3 +272,29 @@
   font-size: 13px;
   display: none;
 }
+
+/* ===== FIX: выпадающие списки поверх графиков/таблицы ===== */
+.filters{
+  overflow: visible !important;     /* важно: не обрезать выпадашку */
+  position: relative;
+  z-index: 10;
+}
+
+.filters .filter-row,
+.filters .filter-group,
+.filters .dropdown-search-container{
+  overflow: visible !important;
+}
+
+/* максимально поверх контента */
+.dropdown-checkbox-group{
+  z-index: 20000 !important;
+}
+
+/* контент ниже выпадашек */
+.chart-container,
+.results,
+.chart-box{
+  position: relative;
+  z-index: 1;
+}

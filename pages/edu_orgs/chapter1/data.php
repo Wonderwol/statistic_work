@@ -324,11 +324,16 @@ foreach ($years as $y) {
     $pieSeries[6][] = (int)($tableByYear[$y]['Evening_schools'] ?? 0);
 }
 
-// 8) Время обновления
-try {
-    $lastUpdate = index_fetch_last_update($pdo);
-    $displayTime = $lastUpdate ? date('H:i d.m.Y', strtotime($lastUpdate)) : date('H:i d.m.Y');
-} catch (Throwable $e) {
-    error_log("Ошибка получения времени обновления: " . $e->getMessage());
-    $displayTime = date('H:i d.m.Y');
+// 8) Дата актуальности данных (обновляется раз в год: 20.09)
+// Правило: если сегодня раньше 20 сентября текущего года — показываем 20.09 прошлого года,
+// иначе — 20.09 текущего года.
+$now = new DateTimeImmutable('now');
+$year = (int)$now->format('Y');
+
+$anchorThisYear = DateTimeImmutable::createFromFormat('!d.m.Y', '20.09.' . $year);
+if ($anchorThisYear instanceof DateTimeImmutable && $now < $anchorThisYear) {
+    $year--;
 }
+
+// На выходе строка ровно как тебе нужно: 20.09.2025
+$displayTime = sprintf('20.09.%04d', $year);

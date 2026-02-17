@@ -1,11 +1,16 @@
 /* filters layout without media */
 .filters {
-        background-color: var(--white);
-        padding: 25px;
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow);
-        margin-bottom: 30px;
-    }
+  background-color: var(--white);
+  padding: 25px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 30px;
+
+  /* как у .chart-box */
+  border: 1px solid rgba(0,0,0,0.06);
+  border-top: 4px solid var(--primary-color);
+  overflow: hidden;
+}
 
 .filter-row {
   display: flex;

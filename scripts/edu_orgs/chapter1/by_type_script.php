@@ -1,5 +1,5 @@
 <?php
-// statistics\scripts\edu_orgs\by_type_script.php
+// statistics/scripts/edu_orgs/by_type_script.php
 ?>
 <script>
 (function () {
@@ -10,7 +10,6 @@
 <?php include __DIR__ . '/02_chart_registry.js.php'; ?>
 <?php include __DIR__ . '/03_chart_options.js.php'; ?>
 <?php include __DIR__ . '/04_chart_pie.js.php'; ?>
-// Удалил 05 и 06
 <?php include __DIR__ . '/07_filters.js.php'; ?>
 <?php include __DIR__ . '/08_table.js.php'; ?>
 

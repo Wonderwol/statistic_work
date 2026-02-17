@@ -12,14 +12,12 @@ require_once $docRoot . '/statistics/config/config.php';
     <title>Информация — Открытая статистика</title>
 
     <?php
-    // Берём общий визуальный стиль витрины (карточки/контейнер/типографика)
+    // Общий стиль витрины
     include $docRoot . '/statistics/styles/style_by_type.php';
 
-    // Хедер/футер (у тебя уже вынесены)
-    include $docRoot . '/statistics/styles/style_by_type.php';
+    // Общие стили футера/хедера/левого меню (ВАЖНО: хедер тут нужен, иначе #header без оформления)
     include $docRoot . '/statistics/styles/shared/style_footer.php';
-
-    // Если левое меню используешь везде — подключи его стили здесь
+    include $docRoot . '/statistics/styles/shared/style_header.php';
     include $docRoot . '/statistics/styles/shared/style_nav_left.php';
     ?>
 
@@ -29,6 +27,7 @@ require_once $docRoot . '/statistics/config/config.php';
         /* Локальные правки под страницу справки */
         .info-block p { margin: 0 0 10px 0; }
         .info-block ul { margin: 8px 0 14px 20px; }
+
         .info-badge {
             display: block;
             background: var(--primary-light);
@@ -42,6 +41,7 @@ require_once $docRoot . '/statistics/config/config.php';
             vertical-align: middle;
             margin-right: 8px;
         }
+
         .doc-link {
             display: inline-flex;
             align-items: center;
@@ -51,13 +51,8 @@ require_once $docRoot . '/statistics/config/config.php';
             border: 1px solid var(--medium-gray);
             border-radius: 8px;
         }
-        .doc-link:hover {
-            background: #fafafa;
-        }
-        .doc-link img {
-            width: 28px;
-            height: 28px;
-        }
+        .doc-link:hover { background: #fafafa; }
+        .doc-link img { width: 28px; height: 28px; }
     </style>
 </head>
 <body>
@@ -70,7 +65,7 @@ include $docRoot . '/statistics/nav/nav_left.php';
 <div class="content-area">
     <div class="container">
         <div class="filters">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 10px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 10px; flex-wrap: wrap;">
                 <h1 style="margin:0;">Информация</h1>
                 <button class="view-btn" onclick="window.history.back()">Назад</button>
             </div>
@@ -105,8 +100,6 @@ include $docRoot . '/statistics/nav/nav_left.php';
         </div>
     </div>
 </div>
-
-</div><!-- /.main-wrapper (nav_left открывает main-wrapper) -->
 
 <?php include $docRoot . '/statistics/pages/shared/footer.php'; ?>
 </body>

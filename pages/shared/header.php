@@ -1,4 +1,3 @@
-<?php include __DIR__ . '/../../styles/style_shared.php'; ?>
 <div id="header">
     <!-- Логотип -->
     <a class="logo" href="http://nimro.ru" title="Новосибирский Институт Мониторинга и Развития Образования">

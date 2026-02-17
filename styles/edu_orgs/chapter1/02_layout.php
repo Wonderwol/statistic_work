@@ -120,12 +120,11 @@ body.view-table .dashboard__side{
 .stats-dock{
   position: fixed;
   right: var(--nimro-dock-r);
-  top: 220px;               /* стартовое значение, JS подстроит под фильтры */
+  top: 220px;
   width: min(var(--nimro-dock-w), 34vw);
   max-height: none;
   overflow: visible;
 
-  /* запрет “съезжаний/вылезаний” */
   transform: none !important;
   transition: none !important;
   animation: none !important;
@@ -135,10 +134,17 @@ body.view-table .dashboard__side{
   padding: 12px;
   border-radius: 14px;
   background: rgba(255,255,255,.96);
+
+  /* было */
   border: 1px solid rgba(0,0,0,.08);
+
+  /* добавляем полоску как у графика */
+  border-top: 4px solid var(--primary-color);
+
   box-shadow: 0 14px 40px rgba(0,0,0,.12);
   backdrop-filter: blur(6px);
 }
+
 
 /* На узких экранах фиксированная панель будет мешать — уводим в поток */
 @media (max-width: 920px){
@@ -210,4 +216,40 @@ body.view-table .dashboard__side{
 .filters .form-select {
   -webkit-user-select: auto;
   user-select: auto;
+}
+
+/* ===== info icon: без видимого "блока" вокруг ===== */
+.page-head__actions .info-link--icon{
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  box-shadow: none !important;
+
+  flex: 0 0 auto;
+}
+
+.page-head__actions .info-link--icon img{
+  width: 28px;
+  height: 28px;
+  display: block;        /* убирает baseline-артефакты */
+}
+
+/* лёгкий hover (круглый), если нужен */
+.page-head__actions .info-link--icon:hover{
+  background: rgba(0,0,0,0.06) !important;
+}
+
+/* аккуратный фокус (тоже круглый) */
+.page-head__actions .info-link--icon:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.15) !important;
 }

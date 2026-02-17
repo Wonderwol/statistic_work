@@ -94,3 +94,22 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+.info-link{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.08);
+  text-decoration: none;
+  margin-right: 10px;
+}
+
+.info-link img{
+  width: 18px;
+  height: 18px;
+  display: block;
+}
