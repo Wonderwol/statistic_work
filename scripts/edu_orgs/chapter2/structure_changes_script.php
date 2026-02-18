@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 <?php include __DIR__ . '/00_boot.js.php'; ?>
 <?php include __DIR__ . '/07_filters.js.php'; ?>
-<?php include __DIR__ . '/10_dynamics_charts.js.php'; ?>
+<?php include __DIR__ . '/10_structure_changes_charts.js.php'; ?>
 
   onReady(function () {
     try { initDynFilters(); } catch (e) { console.error('[nimro] initDynFilters error', e); }

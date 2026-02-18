@@ -52,4 +52,13 @@ include __DIR__ . '/../chapter1/style.php';
 /* Легенда компактнее */
 .chart-box .chartjs-legend ul { margin: 0; padding: 0; }
 
+.chart-subtitle{
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 400;
+  color: rgba(44,62,80,.65);
+}
+
+
 </style>

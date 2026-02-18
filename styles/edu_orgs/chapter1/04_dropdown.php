@@ -1,13 +1,20 @@
-.dropdown-search-container {
+.dropdown-search-container{
   position: relative;
+
+  /* фиксируем высоту “шапки” фильтра (инпута),
+     чтобы стрелка центрировалась внутри поля, а не по всей высоте контейнера */
+  --dd-input-h: 44px;
 }
 
-/* Стрелка справа (визуальная, не часть текста) */
+/* Стрелка справа (внутри поля фильтра) */
 .dropdown-search-container::after{
   content: "";
   position: absolute;
   right: 14px;
-  top: 50%;
+
+  /* центрируем по высоте инпута */
+  top: calc(var(--dd-input-h) / 2);
+
   transform: translateY(-50%);
   width: 0;
   height: 0;
@@ -17,7 +24,7 @@
   pointer-events: none;
 }
 
-/* Когда открыт дропдаун — можно чуть повернуть */
+/* Когда открыт дропдаун — поворачиваем стрелку */
 .dropdown-search-container.active::after{
   transform: translateY(-50%) rotate(180deg);
 }
@@ -47,10 +54,14 @@
 
 
 /* Поле "поиска/выбора" */
-.dropdown-search-input {
+.dropdown-search-input{
   width: 100%;
-  /* + место под стрелку справа */
-  padding: clamp(10px, 0.6vw + 8px, 12px) 40px clamp(10px, 0.6vw + 8px, 12px) clamp(12px, 0.8vw + 10px, 15px);
+  height: var(--dd-input-h);
+  display: block;
+
+  /* место под стрелку справа */
+  padding: 0 40px 0 clamp(12px, 0.8vw + 10px, 15px);
+
   border: 2px solid var(--medium-gray);
   border-radius: var(--border-radius);
   font-size: clamp(13px, 0.3vw + 12px, 14px);
@@ -298,3 +309,4 @@
   position: relative;
   z-index: 1;
 }
+

@@ -31,7 +31,7 @@
             <li><a href="/map/">Карта сайта</a></li>
             <li><a href="/noko/info">НОКО</a></li>
             <li><a href="/nimro_innovations/">РИП</a></li>
-            <li><a href="/statistics/pages/edu_orgs/by_type.php">Статистические данные</a></li>
+            <li><a href="/statistics/pages/edu_orgs/chapter1/by_type.php">Статистические данные</a></li>
         </ul>
     </div>
 </div>

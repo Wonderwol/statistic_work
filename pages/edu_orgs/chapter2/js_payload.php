@@ -5,12 +5,15 @@ $flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_H
 
 $payload = [
     'years' => $chartYears ?? [],
+
     'network' => [
         'labels' => $networkLabels ?? [],
         'series' => $networkSeries ?? [],
         'totals' => $networkTotals ?? [],
     ],
+
     'branches' => $branchesSeries ?? [],
+
     'secondary' => [
         'labels' => $secLabels ?? [],
         'series' => $secSeries ?? [],

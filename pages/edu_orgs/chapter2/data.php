@@ -56,6 +56,18 @@ if (!is_array($locality_types) && $locality_types !== '') $locality_types = [$lo
 
 // данные для селекторов
 $years_data          = dyn_fetch_years_data($pdo);
+
+$year_ids = [];
+foreach ($years_data as $r) {
+    $id = (string)($r['id'] ?? '');
+    if ($id !== '') $year_ids[] = $id;
+}
+
+// сортировка как у тебя (через dyn_year_key / dyn_norm_year)
+$year_ids = array_values(array_unique($year_ids));
+usort($year_ids, static function(string $a, string $b): int {
+    return dyn_year_key($a) <=> dyn_year_key($b);
+});
 $org_types_data      = dyn_fetch_org_types_data($pdo);
 $locality_types_data = dyn_fetch_locality_types_data($pdo);
 

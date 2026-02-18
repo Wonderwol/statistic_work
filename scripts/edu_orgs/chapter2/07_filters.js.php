@@ -1,14 +1,4 @@
 function initDynFilters() {
-  const filterRow = document.querySelector('.filters .filter-row');
-  if (filterRow) {
-    filterRow.addEventListener('mousedown', function (e) {
-      const el = (e.target instanceof Element) ? e.target : e.target?.parentElement;
-      if (!el) return;
-      if (el.closest('input[type="checkbox"], input[type="radio"]')) return;
-      e.preventDefault();
-    }, { passive: false });
-  }
-
   const filtersConfig = {
     org_type: {
       isRadio: true,
@@ -17,16 +7,6 @@ function initDynFilters() {
       clearId: 'org_type-clear',
       containerId: 'org_type-container',
       placeholder: 'Уровень представления данных'
-    },
-    year: {
-      isRadio: false,
-      searchId: 'year-search',
-      groupId: 'year-group',
-      countId: 'year-count',
-      clearId: 'year-clear',
-      containerId: 'year-container',
-      selectAllId: 'year-select-all',
-      placeholder: 'Учебный год'
     },
     locality: {
       isRadio: true,
@@ -43,29 +23,13 @@ function initDynFilters() {
     const checkboxGroup = document.getElementById(config.groupId);
     const clearBtn = document.getElementById(config.clearId);
     const container = document.getElementById(config.containerId);
-    const selectAllBtn = config.selectAllId ? document.getElementById(config.selectAllId) : null;
 
     if (!searchInput || !checkboxGroup) return;
 
-    const checkboxes = checkboxGroup.querySelectorAll('input[type="' + (config.isRadio ? 'radio' : 'checkbox') + '"]');
+    const inputType = config.isRadio ? 'radio' : 'checkbox';
+    const checkboxes = checkboxGroup.querySelectorAll('input[type="' + inputType + '"]');
     const checkboxItems = checkboxGroup.querySelectorAll('.checkbox-item');
     const noResults = checkboxGroup.querySelector('.no-results');
-
-    function updateSelectedCount() {
-      if (!config.countId) return;
-      const countSpan = document.getElementById(config.countId);
-      if (!countSpan) return;
-
-      const checkedCount = config.isRadio
-        ? (Array.from(checkboxes).some(cb => cb.checked) ? 1 : 0)
-        : Array.from(checkboxes).filter(cb => cb.checked).length;
-
-      countSpan.textContent = String(checkedCount);
-
-      if (selectAllBtn && filterName === 'year') {
-        selectAllBtn.textContent = checkedCount === checkboxes.length ? 'Снять все' : 'Выбрать все';
-      }
-    }
 
     function updateSearchInputText() {
       const selectedText = [];
@@ -76,19 +40,10 @@ function initDynFilters() {
         }
       });
 
-      if (selectedText.length > 0) {
-        if (filterName === 'year' && selectedText.length > 3) {
-          searchInput.value = `Выбрано ${selectedText.length} лет`;
-        } else {
-          searchInput.value = selectedText.join(', ');
-        }
-      } else {
-        searchInput.value = config.placeholder;
-      }
+      searchInput.value = (selectedText.length > 0) ? selectedText.join(', ') : config.placeholder;
     }
 
     function updateFilterState() {
-      updateSelectedCount();
       updateSearchInputText();
     }
 
@@ -159,15 +114,6 @@ function initDynFilters() {
       clearBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         checkboxes.forEach(cb => cb.checked = false);
-        updateFilterState();
-      });
-    }
-
-    if (selectAllBtn) {
-      selectAllBtn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-        checkboxes.forEach(cb => cb.checked = !allChecked);
         updateFilterState();
       });
     }

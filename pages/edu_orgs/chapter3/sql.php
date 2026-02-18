@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-function dyn_norm_list(mixed $v): array
+function ch3_norm_list(mixed $v): array
 {
     if ($v === null) return [];
     if (is_array($v)) return $v;
@@ -9,7 +9,7 @@ function dyn_norm_list(mixed $v): array
     return [$v];
 }
 
-function dyn_only_ints(array $arr): array
+function ch3_only_ints(array $arr): array
 {
     $out = [];
     foreach ($arr as $v) {
@@ -21,7 +21,7 @@ function dyn_only_ints(array $arr): array
     return $out;
 }
 
-function dyn_only_year_periods(array $arr): array
+function ch3_only_year_periods(array $arr): array
 {
     $out = [];
     foreach ($arr as $v) {
@@ -38,7 +38,7 @@ function dyn_only_year_periods(array $arr): array
     return $out;
 }
 
-function dyn_fetch_years_data(PDO $pdo): array
+function ch3_fetch_years_data(PDO $pdo): array
 {
     $sql = "
         SELECT DISTINCT
@@ -51,7 +51,7 @@ function dyn_fetch_years_data(PDO $pdo): array
     return $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function dyn_fetch_org_types_data(PDO $pdo): array
+function ch3_fetch_org_types_data(PDO $pdo): array
 {
     $sql = "
         SELECT
@@ -63,7 +63,7 @@ function dyn_fetch_org_types_data(PDO $pdo): array
     return $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function dyn_fetch_locality_types_data(PDO $pdo): array
+function ch3_fetch_locality_types_data(PDO $pdo): array
 {
     $sql = "
         SELECT
@@ -75,15 +75,15 @@ function dyn_fetch_locality_types_data(PDO $pdo): array
     return $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function dyn_fetch_organizations(PDO $pdo, array $filters): array
+function ch3_fetch_organizations(PDO $pdo, array $filters): array
 {
     $org_type_raw = $filters['org_type'] ?? null;
     $year_ids_raw = $filters['year_id'] ?? [];
     $locality_raw = $filters['locality_type'] ?? null;
 
-    $org_type_list = dyn_only_ints(dyn_norm_list($org_type_raw));
-    $year_ids_list = dyn_only_year_periods(dyn_norm_list($year_ids_raw));
-    $locality_list = dyn_only_ints(dyn_norm_list($locality_raw));
+    $org_type_list = ch3_only_ints(ch3_norm_list($org_type_raw));
+    $year_ids_list = ch3_only_year_periods(ch3_norm_list($year_ids_raw));
+    $locality_list = ch3_only_ints(ch3_norm_list($locality_raw));
 
     if (empty($locality_list)) $locality_list = [3];
 
@@ -93,18 +93,11 @@ function dyn_fetch_organizations(PDO $pdo, array $filters): array
             da.Area_name,
             ao.Year_period,
 
-            SUM(CASE WHEN ao.Organization_type_code = 1 THEN ao.Area_organizations_count ELSE 0 END) AS Nursery_school_primary,
-            SUM(CASE WHEN ao.Organization_type_code = 2 THEN ao.Area_organizations_count ELSE 0 END) AS Primary_school,
-            SUM(CASE WHEN ao.Organization_type_code = 3 THEN ao.Area_organizations_count ELSE 0 END) AS Basic_school,
+            SUM(CASE WHEN ao.Organization_type_code = 1  THEN ao.Area_organizations_count ELSE 0 END) AS Nursery_school_primary,
+            SUM(CASE WHEN ao.Organization_type_code = 2  THEN ao.Area_organizations_count ELSE 0 END) AS Primary_school,
+            SUM(CASE WHEN ao.Organization_type_code = 3  THEN ao.Area_organizations_count ELSE 0 END) AS Basic_school,
 
             SUM(CASE WHEN ao.Organization_type_code BETWEEN 5 AND 9 THEN ao.Area_organizations_count ELSE 0 END) AS Secondary_school_sum,
-
-            SUM(CASE WHEN ao.Organization_type_code = 5 THEN ao.Area_organizations_count ELSE 0 END) AS Secondary_school,
-            SUM(CASE WHEN ao.Organization_type_code = 6 THEN ao.Area_organizations_count ELSE 0 END) AS Secondary_school_special,
-            SUM(CASE WHEN ao.Organization_type_code = 7 THEN ao.Area_organizations_count ELSE 0 END) AS Gymnasium,
-            SUM(CASE WHEN ao.Organization_type_code = 8 THEN ao.Area_organizations_count ELSE 0 END) AS Lyceum,
-            SUM(CASE WHEN ao.Organization_type_code = 9 THEN ao.Area_organizations_count ELSE 0 END) AS Cadet_corps,
-
             SUM(CASE WHEN ao.Organization_type_code = 10 THEN ao.Area_organizations_count ELSE 0 END) AS Branches,
             SUM(CASE WHEN ao.Organization_type_code = 11 THEN ao.Area_organizations_count ELSE 0 END) AS Sanatorium_schools,
             SUM(CASE WHEN ao.Organization_type_code = 12 THEN ao.Area_organizations_count ELSE 0 END) AS Special_needs_schools,

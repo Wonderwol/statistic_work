@@ -29,6 +29,26 @@ window.initializeCharts = function () {
   const colors = pairs.map((_, i) => BAR_COLORS[i % BAR_COLORS.length]);
   const total = values.reduce((s, v) => s + v, 0);
 
+  // Tooltip всегда над курсором (сверху), а не сбоку
+  if (Chart && Chart.Tooltip && Chart.Tooltip.positioners && !Chart.Tooltip.positioners.nimroTop) {
+    Chart.Tooltip.positioners.nimroTop = function (items, eventPosition) {
+      const chart = this.chart;
+      const area = chart && chart.chartArea ? chart.chartArea : null;
+
+      const x = eventPosition.x;
+      const y = eventPosition.y;
+
+      if (!area) return { x, y };
+
+      // чуть “зажимаем” координаты внутри области графика,
+      // чтобы Chart.js не уводил tooltip вправо/влево
+      const cx = Math.min(Math.max(x, area.left + 12), area.right - 12);
+      const cy = Math.min(Math.max(y, area.top + 12), area.bottom - 12);
+
+      return { x: cx, y: cy };
+    };
+  }
+
   // ===== фикс толщины баров + адаптивная высота под количество баров =====
   function nimroGetBarSizing(count) {
     const isMobile = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
@@ -128,7 +148,7 @@ window.initializeCharts = function () {
         hoverBackgroundColor: colors,
         borderColor: 'rgba(80, 60, 60, 0.55)',
         borderWidth: 1.5,
-        borderRadius: 10,
+        borderRadius: { topLeft: 0, bottomLeft: 0, topRight: 10, bottomRight: 10 },
         borderSkipped: false,
 
         minBarLength: sizing.isMobile ? 6 : 10,
@@ -141,12 +161,34 @@ window.initializeCharts = function () {
     },
     options: buildOptions({
       indexAxis: 'y',
+
+      // tooltip только при реальном попадании в бар
+      interaction: { mode: 'nearest', intersect: true },
+      hover: { mode: 'nearest', intersect: true },
+
+      // ВАЖНО: отключаем hover-анимации (active), чтобы tooltip не "распадался" при затухании
+      transitions: {
+        active: { animation: { duration: 0 } }
+      },
+
       // место справа под подписи — ключевой фикс
       layout: { padding: { top: 6, right: valuePadRight, bottom: 6, left: 8 } },
+
       plugins: {
         legend: { display: false },
         tooltip: {
+          position: 'nimroTop',
+          xAlign: 'center',
+          yAlign: 'bottom',
+          caretPadding: 10,
           displayColors: false,
+
+          // ВАЖНО: отключаем анимацию tooltip (чтобы не было "плавного исчезновения" и артефактов стрелки)
+          animation: { duration: 0 },
+
+          mode: 'nearest',
+          intersect: true,
+
           callbacks: {
             title: () => '',
             label: (ctx) => {
@@ -157,6 +199,7 @@ window.initializeCharts = function () {
           }
         }
       },
+
       scales: {
         y: {
           grid: { display: false },

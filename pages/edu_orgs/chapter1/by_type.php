@@ -215,7 +215,7 @@
                                 ? '(' . $years[0] . ')'
                                 : '(' . $years[0] . '–' . $years[count($years) - 1] . ')' ?>
                         </h3>
-                        <div class="chart-subnote">Итого по каждому году показано справа от столбика, доли — в подсказке.</div>
+                        <div class="chart-subnote">Итого по каждому году показано справа от столбика – в единицах, в подсказке – в долях.</div>
                     </div>
 
                     <div id="structureLegend" class="chart-legend" aria-label="Легенда структуры"></div>
