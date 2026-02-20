@@ -1,14 +1,6 @@
 <?php
 declare(strict_types=1);
 
-/**
- * data.php — только логика и подготовка массивов.
- * Ничего не выводит (никаких echo).
- *
- * Требования:
- * - $pdo уже существует (подключён config.php в index.php)
- * - sql.php лежит рядом и содержит функции index_fetch_*
- */
 require_once __DIR__ . '/sql.php';
 
 /** @var PDO $pdo */
@@ -20,11 +12,6 @@ function nimro_norm_year(string $s): string
     return trim($s);
 }
 
-/**
- * Определяем "Итого по НСО" по данным (самая большая сумма Total_organizations)
- * для выбранного года и Area_type_code (местность).
- * Это убирает проблему, когда итог в dat_Area называется по-разному ("Всего", "Итого", и т.д.).
- */
 function nimro_detect_total_area(PDO $pdo, string $yearPeriod, int $areaTypeCode): ?array
 {
     $sql = "
@@ -133,7 +120,7 @@ if ($totalAreaCode !== null) {
     }
     unset($t);
 
-    // поднимаем "Итого по НСО" наверх списка (чтобы было красиво)
+    // поднимаем "Итого по НСО" наверх списка
     usort($org_types_data, static function (array $a, array $b): int {
         $aIs = ((string)($a['name'] ?? '') === 'Итого по НСО') ? 0 : 1;
         $bIs = ((string)($b['name'] ?? '') === 'Итого по НСО') ? 0 : 1;
@@ -144,15 +131,12 @@ if ($totalAreaCode !== null) {
 
 /**
  * Дефолт по 1-му фильтру: Итого по НСО (Area_code итога).
- * Если пользователь фильтр не трогал — ставим итог.
  */
 if ((!isset($_GET['org_type']) || empty($org_types)) && $totalAreaCode !== null) {
     $org_types = [$totalAreaCode];
 }
 
-// Год(а) для таблицы остаются в $year_ids (чекбоксы).
 // Для запроса в БД добавляем ещё chart_year_id (если его нет среди year_id[]),
-// чтобы график всегда имел данные.
 $year_ids_query = $year_ids;
 if ($chart_year_id !== '' && !in_array($chart_year_id, $year_ids_query, true)) {
     $year_ids_query[] = $chart_year_id;
@@ -165,7 +149,7 @@ $organizations = index_fetch_organizations($pdo, [
 ]);
 
 /**
- * Анти-двойной учёт (защита):
+ * Анти-двойной учёт:
  * - если выбран итог — оставляем только строку итога;
  * - если выбран не итог — вырезаем строку итога, если она вдруг попала.
  */
@@ -262,7 +246,8 @@ foreach ($organizations as $row) {
 }
 sort($yearsTable);
 
-$yearsTable = array_values(array_unique(array_map('strval', $year_ids)));
+// Берём годы для таблицы из выбранных чекбоксов
+$yearsTable = array_values(array_unique(array_map('strval', (array)$year_ids)));
 sort($yearsTable);
 
 // Если chart_year_id не выбран — по умолчанию берём самый свежий из выбранных для таблицы
@@ -275,31 +260,10 @@ if ($chart_year_id === '' && !empty($yearsTable)) {
 $years = ($chart_year_id !== '') ? [$chart_year_id] : $yearsTable;
 $show_single_year_charts = true;
 
-$totalOrganizations = [];
-$nurseryData = [];
-$basicData = [];
-$specialData = [];
-
-foreach ($years as $y) {
-    $totalOrganizations[] = (int)($tableByYear[$y]['Total_organizations'] ?? 0);
-    $nurseryData[] = (int)($tableByYear[$y]['Nursery_school_primary'] ?? 0);
-    $basicData[] = (int)($tableByYear[$y]['Basic_school'] ?? 0);
-    $specialData[] = (int)($tableByYear[$y]['Special_needs_schools'] ?? 0);
-}
-
-$schoolTypesLabels = ['СОШ', 'СОШ с УИОП', 'Гимназии', 'Лицеи', 'Кадетские корпуса'];
-$schoolTypesData = [0, 0, 0, 0, 0];
-
 $pieLabels = ['НОШ д/сад', 'НОШ', 'Основные школы', 'Средние школы', 'Санаторные', 'ОВЗ школы', 'Вечерние'];
 $pieData = [0, 0, 0, 0, 0, 0, 0];
 
 foreach ($years as $y) {
-    $schoolTypesData[0] += (int)($tableByYear[$y]['Secondary_school'] ?? 0);
-    $schoolTypesData[1] += (int)($tableByYear[$y]['Secondary_school_special'] ?? 0);
-    $schoolTypesData[2] += (int)($tableByYear[$y]['Gymnasium'] ?? 0);
-    $schoolTypesData[3] += (int)($tableByYear[$y]['Lyceum'] ?? 0);
-    $schoolTypesData[4] += (int)($tableByYear[$y]['Cadet_corps'] ?? 0);
-
     $pieData[0] += (int)($tableByYear[$y]['Nursery_school_primary'] ?? 0);
     $pieData[1] += (int)($tableByYear[$y]['Primary_school'] ?? 0);
     $pieData[2] += (int)($tableByYear[$y]['Basic_school'] ?? 0);
@@ -309,24 +273,62 @@ foreach ($years as $y) {
     $pieData[6] += (int)($tableByYear[$y]['Evening_schools'] ?? 0);
 }
 
-$pieSeries = [];
-for ($i = 0; $i < count($pieLabels); $i++) {
-    $pieSeries[$i] = [];
+// =========================================================
+// 7) График: "Количество ОО по районам" (Total_organizations)
+// =========================================================
+
+$selectedAreaCode = (!empty($org_types) ? (string)reset($org_types) : '');
+// если выбран "Итого по НСО" — подсветку выключаем
+if ($totalAreaCode !== null && $selectedAreaCode !== '' && $selectedAreaCode === (string)$totalAreaCode) {
+    $selectedAreaCode = '';
 }
 
-foreach ($years as $y) {
-    $pieSeries[0][] = (int)($tableByYear[$y]['Nursery_school_primary'] ?? 0);
-    $pieSeries[1][] = (int)($tableByYear[$y]['Primary_school'] ?? 0);
-    $pieSeries[2][] = (int)($tableByYear[$y]['Basic_school'] ?? 0);
-    $pieSeries[3][] = (int)($tableByYear[$y]['sec_sc_sum'] ?? 0);
-    $pieSeries[4][] = (int)($tableByYear[$y]['Sanatorium_schools'] ?? 0);
-    $pieSeries[5][] = (int)($tableByYear[$y]['Special_needs_schools'] ?? 0);
-    $pieSeries[6][] = (int)($tableByYear[$y]['Evening_schools'] ?? 0);
+$rankYear = (string)($chart_year_id !== '' ? $chart_year_id : $yearPeriod);
+$areaRankLabels = [];
+$areaRankValues = [];
+$areaRankCodes  = [];
+
+try {
+    $rows = ($rankYear !== '') ? index_fetch_area_totals($pdo, $rankYear, $areaTypeCode) : [];
+
+    $totalRow = null;
+    $items = [];
+
+    foreach ($rows as $r) {
+        $code = (string)($r['Area_code'] ?? '');
+        $name = (string)($r['Area_name'] ?? '');
+        $val  = (int)($r['Total_organizations'] ?? 0);
+
+        if ($val <= 0) continue;
+        if ($code === '') continue;
+
+        if ($totalAreaCode !== null && $code === (string)$totalAreaCode) {
+            $totalRow = ['code' => $code, 'name' => 'Итого', 'val' => $val];
+            continue;
+        }
+
+        $items[] = ['code' => $code, 'name' => $name, 'val' => $val];
+    }
+
+    usort($items, static function (array $a, array $b): int {
+        if (($b['val'] ?? 0) !== ($a['val'] ?? 0)) return ($b['val'] ?? 0) <=> ($a['val'] ?? 0);
+        return strcmp((string)($a['name'] ?? ''), (string)($b['name'] ?? ''));
+    });
+
+    if (is_array($totalRow)) {
+        $items[] = $totalRow;
+    }
+
+    foreach ($items as $it) {
+        $areaRankCodes[]  = (string)$it['code'];
+        $areaRankLabels[] = (string)$it['name'];
+        $areaRankValues[] = (int)$it['val'];
+    }
+} catch (Throwable $e) {
+    error_log('Ошибка построения area-rank: ' . $e->getMessage());
 }
 
-// 8) Дата актуальности данных (обновляется раз в год: 20.09)
-// Правило: если сегодня раньше 20 сентября текущего года — показываем 20.09 прошлого года,
-// иначе — 20.09 текущего года.
+// 8) Дата актуальности данных (20.09)
 $now = new DateTimeImmutable('now');
 $year = (int)$now->format('Y');
 
@@ -334,6 +336,4 @@ $anchorThisYear = DateTimeImmutable::createFromFormat('!d.m.Y', '20.09.' . $year
 if ($anchorThisYear instanceof DateTimeImmutable && $now < $anchorThisYear) {
     $year--;
 }
-
-// На выходе строка ровно как тебе нужно: 20.09.2025
 $displayTime = sprintf('20.09.%04d', $year);

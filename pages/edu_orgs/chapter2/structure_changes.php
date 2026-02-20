@@ -153,7 +153,7 @@ include $docRoot . '/statistics/nav/nav_left.php';
           <div class="chart-header">
             <div>
               <h3>Кроме того, филиалы (ед.)</h3>
-              <div class="chart-subtitle">Доли от общего количества организаций, выраженные в единицах.</div>
+              <div class="chart-subtitle">Доли от общего количества организаций в единицах.</div>
             </div>
           </div>
           <div class="chart-wrap chart-wrap--branches">

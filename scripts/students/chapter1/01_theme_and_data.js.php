@@ -38,16 +38,15 @@ function toRgba(color, alpha) {
   return `rgba(0,0,0,${alpha})`;
 }
 
-function safeArr(v) { return Array.isArray(v) ? v : []; }
-
-function getChartData() {
+function getStudentsData() {
   return {
-    pieLabels: safeArr(window.pieLabels),
-    pieData: safeArr(window.pieData),
+    lineLabels: safeArr(window.studentsLineLabels),
+    lineValues: safeArr(window.studentsLineValues).map(v => Number(v) || 0),
 
     areaRankLabels: safeArr(window.areaRankLabels),
-    areaRankValues: safeArr(window.areaRankValues),
-    areaRankCodes: safeArr(window.areaRankCodes),
+    areaRankValues: safeArr(window.areaRankValues).map(v => Number(v) || 0),
+    areaRankCodes: safeArr(window.areaRankCodes).map(v => String(v ?? '')),
+
     highlightAreaCode: String(window.highlightAreaCode ?? ''),
     rankYearLabel: String(window.rankYearLabel ?? '')
   };

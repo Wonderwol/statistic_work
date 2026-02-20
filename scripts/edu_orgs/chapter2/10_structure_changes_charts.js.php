@@ -220,6 +220,29 @@ function initDynamicsCharts() {
     window.__nimroDynCharts[key] = null;
   }
 
+  function nimroLegendOnlyUsed(legendItem, chartData) {
+    const ds = chartData && Array.isArray(chartData.datasets)
+      ? chartData.datasets[legendItem.datasetIndex]
+      : null;
+    if (!ds) return false;
+
+    // приоритет: абсолютные значения (самые корректные для проверки), иначе проценты
+    const basis = Array.isArray(ds._abs) ? ds._abs : (Array.isArray(ds.data) ? ds.data : null);
+
+    // если вообще нет данных — не показываем
+    return nimroHasPositive(basis);
+  }
+
+  // Легенда: показываем только реально используемые цвета (серии с ненулевыми значениями)
+  function nimroHasPositive(arr) {
+    if (!Array.isArray(arr)) return false;
+    for (let i = 0; i < arr.length; i++) {
+      const v = Number(arr[i] ?? 0);
+      if (Number.isFinite(v) && v > 0) return true;
+    }
+    return false;
+  }
+
   // 1) Структура сети (100%)
   (function () {
     const canvas = document.getElementById('networkChart');
@@ -286,7 +309,14 @@ function initDynamicsCharts() {
           }
         },
         plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } },
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              usePointStyle: true,
+              filter: nimroLegendOnlyUsed
+            }
+          },
          tooltip: {
             position: 'nimroTop',
             xAlign: 'center',
@@ -332,7 +362,7 @@ function initDynamicsCharts() {
       data: {
         labels: yearsDesc,
         datasets: [{
-          label: 'кроме того филиалы',
+          label: 'кроме того, филиалы',
           data: branchesAbs,
           backgroundColor: COLOR_PRIMARY,
 
@@ -464,7 +494,14 @@ function initDynamicsCharts() {
           }
         },
         plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } },
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              usePointStyle: true,
+              filter: nimroLegendOnlyUsed
+            }
+          },
           tooltip: {
             position: 'nimroTop',
             xAlign: 'center',

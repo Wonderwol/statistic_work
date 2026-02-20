@@ -1,5 +1,9 @@
+/* =========================================================
+   CARDS (общие) + DOCK (карточки справа)
+   ========================================================= */
+
 /* Сетка карточек: 2 в строку */
-.statistics {
+.statistics{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
@@ -10,42 +14,40 @@
 
 /* На телефоне — 1 колонка */
 @media (max-width: 760px){
-  .statistics{
-    grid-template-columns: 1fr;
-  }
+  .statistics{ grid-template-columns: 1fr; }
 }
 
-/* Если нужно, чтобы “итоговая” карточка была на всю ширину */
-.stat-card--wide{
-  grid-column: 1 / -1;
-}
+/* Итоговая карточка на всю ширину */
+.stat-card--wide{ grid-column: 1 / -1; }
 
-
-/* Карточка */
-.stat-card {
+/* Базовая карточка */
+.stat-card{
   background-color: var(--white);
   padding: 25px;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  transition: var(--transition);
+  transition: transform .16s ease, box-shadow .16s ease;
   border-top: 4px solid var(--primary-color);
   align-items: center;
+  box-sizing: border-box;
 }
 
 /* На случай, если в HTML остались inline style width:49%/50% */
-.statistics .stat-card[style] {
+.statistics .stat-card[style]{
   width: auto !important;
   max-width: none !important;
 }
 
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+@media (hover:hover) and (pointer:fine){
+  .stat-card:hover{
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,.15);
+  }
 }
 
-.stat-card h3 {
+.stat-card h3{
   color: var(--primary-color);
   margin-bottom: 15px;
   font-size: 16px;
@@ -53,37 +55,29 @@
   line-height: 1.4;
 }
 
-.stat-value {
+.stat-value{
   font-size: 42px;
   font-weight: 700;
   color: var(--primary-color);
   margin-top: auto;
 }
 
-/* Пустое состояние (у тебя в HTML class="no-results") */
-.no-results {
+/* Пустое состояние */
+.no-results{
   padding: 60px 20px;
   text-align: center;
   color: var(--primary-color);
 }
+.no-results h2{ margin-bottom: 15px; font-size: 24px; }
+.no-results p{ color: #666; font-size: 16px; }
 
-.no-results h2 {
-  margin-bottom: 15px;
-  font-size: 24px;
-}
-
-.no-results p {
-  color: #666;
-  font-size: 16px;
-}
-
-/* ===== Компактная сводка в правой колонке ===== */
+/* ===== Компактная сводка в правой колонке (если используется) ===== */
 .stats-panel__title{
   grid-column: 1 / -1;
   margin: 0 0 4px 0;
   font-size: 13px;
   font-weight: 800;
-  color: rgba(44,62,80,0.8);
+  color: rgba(44,62,80,.8);
   letter-spacing: .2px;
 }
 
@@ -92,7 +86,6 @@
   gap: 10px;
   margin: 0;
 }
-
 .dashboard__side .stat-card{
   padding: 12px 14px;
   flex-direction: row;
@@ -100,21 +93,18 @@
   align-items: center;
   border-top-width: 3px;
 }
-
 .dashboard__side .stat-card:hover{
   transform: none;
   box-shadow: var(--shadow);
 }
-
 .dashboard__side .stat-card h3{
   margin: 0;
   font-size: 13px;
   line-height: 1.25;
   font-weight: 700;
-  color: rgba(44,62,80,0.85);
+  color: rgba(44,62,80,.85);
   text-align: left;
 }
-
 .dashboard__side .stat-value{
   margin: 0;
   font-size: 22px;
@@ -122,233 +112,156 @@
   font-weight: 900;
 }
 
-.dashboard__side .stat-card--total .stat-value{
-  font-size: 26px;
+/* =========================================================
+   DOCK (карточки справа внутри .stats-dock)
+   ========================================================= */
+
+/* FIX 1: фон панели с карточками — строго белый (убираем серость от rgba+blur) */
+.stats-dock{
+  background: #fff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
-.dashboard__side .stat-card--total h3{
-  font-weight: 900;
+/* Если stats-dock ещё и chart-box — не режем тени */
+.stats-dock.chart-box{
+  overflow: visible !important;
+  background: #fff !important;
 }
 
-/* ===== Компактные “строчные” карточки внутри dock ===== */
+/* Заголовок */
 .stats-dock__head{
-  font-weight: 900;
-  font-size: 13px;
-  color: rgba(44,62,80,.85);
-  letter-spacing: .2px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #2c3e50;
+  letter-spacing: 0;
   margin: 2px 2px 10px 2px;
 }
 
+.stats-dock,
+.stats-dock *{
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Сетка карточек dock */
 .stats-dock__list{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-}
-
-/* “ОО всего” (total) — на всю ширину */
-
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  text-align: center;
-  padding: 14px 12px;
-  gap: 6px;
-}
-
-/* На узких — обратно в 1 колонку */
-@media (max-width: 460px){
-  .stats-dock__list{
-    grid-template-columns: 1fr;
-  }
-}
-
-.stats-dock .stat-card{
-  padding: 10px 12px;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-
-  border-top-width: 3px;
-}
-
-.stats-dock .stat-card:hover{
-  transform: none;
-  box-shadow: var(--shadow);
-}
-
-.stats-dock .stat-card h3{
-  margin: 0;
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1.25;
-  color: rgba(44,62,80,.86);
-  text-align: left;
-}
-
-.stats-dock .stat-value{
-  margin: 0;
-  font-size: 22px;
-  font-weight: 900;
-  line-height: 1;
-  color: var(--primary-color);
-}
-
-.stats-dock .stat-card--dock-total .stat-value{
-  margin: 0;
-  color: #fff;
-  font-size: 30px;
-  font-weight: 900;
-}
-
-.stats-dock .stat-card{
-  border: 1px solid rgba(0,0,0,.06);
-  background: rgba(255,255,255,.98);
-}
-
-.stats-dock .stat-card h3{
-  max-width: 70%;
-}
-
-/* ===== Акцент для карточки "ОО всего" (в правом dock) ===== */
-
-
-.stats-dock .stat-card--dock-total h3{
-  margin: 0;
-  width: 100%;
-  text-align: center;
-  color: var(--primary-color);
-}
-
-.stats-dock .stat-card--dock-total .stat-value{
-  margin: 0;
-  color: var(--primary-color);
-  font-size: 30px;
-  font-weight: 900;
-}
-
-.stats-dock .stat-card--dock-total{
-  grid-column: 1 / -1;              /* ВАЖНО: на всю ширину сетки */
-  border: 1px solid rgba(255,255,255,.18);
-  border-top-width: 4px;
-  border-top-color: rgba(255,255,255,.35);
-
-  display: flex;
-  flex-direction: column;           /* вертикально */
-  justify-content: center;
-  align-items: center;
-
-  text-align: center;
-  padding: 14px 12px;
-  gap: 6px;
-  min-height: 96px;
-}
-
-.stats-dock .stat-card--dock-total h3{
-  margin: 0;
-  width: 100%;
-  max-width: none;                  /* перебиваем max-width:70% */
-  text-align: center;
-  color: rgba(44,62,80,.86);
-  font-size: 13px;
-  font-weight: 900;
-  line-height: 1.25;
-}
-
-.stats-dock .stat-card--dock-total .stat-value{
-  margin: 0;
-  color: var(--primary-color);
-  font-size: 30px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-/* ===== Dock (сводка справа) ===== */
-
-.stats-dock__head{
-  font-weight: 900;
-  font-size: 13px;
-  color: rgba(255,255,255,.92);
-  letter-spacing: .2px;
-  margin: 2px 2px 10px 2px;
-}
-
-.stats-dock__list{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  padding: 4px;             /* чтобы тени не упирались в край */
+  background: #fff !important;
+  overflow: visible;
 }
 
 @media (max-width: 460px){
   .stats-dock__list{ grid-template-columns: 1fr; }
 }
 
-/* Все карточки внутри dock — белые, без hover-движения */
+/* Dock-карточки: по умолчанию белые + коричневая рамка */
+/* Dock-карточки: белые + толстая коричневая рамка (красивее) */
 .stats-dock .stat-card{
-  background: #fff;
-  border: 1px solid rgba(0,0,0,.08);
-  border-top: 0;
-  box-shadow: none;
+  box-sizing: border-box;
 
-  padding: 10px 12px;
-  border-radius: 12px;
+  background: #fff !important;
+
+  /* толще граница */
+  border: 3px solid var(--primary-color) !important;
+  border-radius: 14px !important;
+
+  padding: 10px 12px !important;
 
   display: flex;
-  flex-direction: row;
+  flex-direction: row !important;
   justify-content: space-between;
-  align-items: center;
+  align-items: center !important;
   gap: 10px;
 
-  transition: none;
-}
+  transform: none !important;
+  filter: none !important;
 
-.stats-dock .stat-card:hover{
-  transform: none;
-  box-shadow: none;
+  /* более приятная “карточная” глубина */
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.10),
+    inset 0 1px 0 rgba(255,255,255,.85) !important;
+
+  transition:
+    background-color .22s cubic-bezier(.2,.8,.2,1),
+    border-color .22s cubic-bezier(.2,.8,.2,1),
+    box-shadow .22s cubic-bezier(.2,.8,.2,1),
+    color .22s cubic-bezier(.2,.8,.2,1) !important;
 }
 
 .stats-dock .stat-card h3{
-  margin: 0;
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1.25;
-  color: rgba(44,62,80,.86);
-  text-align: left;
+  margin: 0 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;     /* как у заголовков в других блоках */
+  line-height: 1.35 !important;
+  color: var(--primary-color) !important;
+  text-align: left !important;
   max-width: 70%;
+  letter-spacing: 0;
+  transition: color .22s cubic-bezier(.2,.8,.2,1) !important;
 }
 
 .stats-dock .stat-value{
-  margin: 0;
-  font-size: 22px;
-  font-weight: 900;
-  line-height: 1;
-  color: var(--primary-color);
+  margin: 0 !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;     /* как “жирные значения” в других блоках */
+  line-height: 1 !important;
+  color: var(--primary-color) !important;
+  letter-spacing: 0;
+  transition: color .22s cubic-bezier(.2,.8,.2,1) !important;
 }
 
-/* "ОО всего" — на всю ширину и по центру */
+/* "ОО всего" / "Итого ОО" — на всю ширину + крупнее */
 .stats-dock .stat-card--dock-total{
-  grid-column: 1 / -1;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  min-height: 96px;
-  padding: 14px 12px;
-}
-
-.stats-dock .stat-card--dock-total h3{
+  grid-column: 1 / -1;            /* на всю ширину сетки */
   width: 100%;
-  max-width: none;
-  text-align: center;
-  color: var(--primary-color);
-  font-weight: 900;
+  justify-content: center !important;
+  padding: 14px 14px !important;
+  gap: 8px;
 }
 
+/* Надпись "Итого ОО" — больше */
+.stats-dock .stat-card--dock-total h3{
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  max-width: none !important;
+}
+
+/* Число — больше */
 .stats-dock .stat-card--dock-total .stat-value{
-  font-size: 30px;
+  font-size: 36px !important;
+  font-weight: 1000 !important;
+  line-height: 1 !important;
 }
 
+/* Hover: фон коричневый, текст белый, граница не выделяется (сливается с фоном) */
+@media (hover:hover) and (pointer:fine){
+  .stats-dock .stat-card:hover{
+    background: var(--primary-color) !important;
 
+    /* граница не выделяется: делаем её того же цвета, что фон */
+    border-color: var(--primary-color) !important;
 
+    /* без внутреннего "канта" */
+    box-shadow: 0 18px 42px rgba(0,0,0,.18) !important;
+  }
+
+  .stats-dock .stat-card:hover h3,
+  .stats-dock .stat-card:hover .stat-value{
+    color: #fff !important;
+  }
+}
+
+/* Подпись в dock — как .chart-subnote из 07_charts.php */
+.stats-dock__caption{
+  margin-top: 4px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(44,62,80,0.65);
+}

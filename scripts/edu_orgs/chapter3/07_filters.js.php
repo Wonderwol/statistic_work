@@ -1,3 +1,16 @@
+// Добивка: не даём браузеру стартовать выделение текста при mousedown внутри фильтров
+document.querySelectorAll('.filters .filter-row').forEach(function (filterRow) {
+  filterRow.addEventListener('mousedown', function (e) {
+    const el = (e.target instanceof Element) ? e.target : e.target?.parentElement;
+    if (!el) return;
+
+    // На сами checkbox/radio не лезем
+    if (el.closest('input[type="checkbox"], input[type="radio"]')) return;
+
+    e.preventDefault();
+  }, { passive: false });
+});
+
 function initCh3Filters() {
   const cfg = {
     org_type: {

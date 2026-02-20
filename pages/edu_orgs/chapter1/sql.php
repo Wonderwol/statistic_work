@@ -221,3 +221,41 @@ function index_fetch_organizations(PDO $pdo, array $filters): array
     $stmt->execute($params);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+/**
+ * Данные для графика "ОО по районам" (Total_organizations) за один год.
+ *
+ * ВАЖНО: без фильтра по району — возвращаем все районы.
+ */
+function index_fetch_area_totals(PDO $pdo, string $yearPeriod, int $areaTypeCode): array
+{
+    $yearPeriod = trim((string)$yearPeriod);
+    if ($yearPeriod === '') return [];
+
+    // безопасный формат Year_period: 2024 | 2023-2024 | 2023/2024
+    $norm = str_replace(["\u{2013}", "\u{2014}", '–', '—'], '-', $yearPeriod);
+    $norm = preg_replace('/\s+/', '', $norm);
+    if (!preg_match('/^\d{4}([\-\/]\d{4})?$/', $norm)) {
+        return [];
+    }
+
+    if ($areaTypeCode <= 0) $areaTypeCode = 3;
+
+    $sql = "
+        SELECT
+            ao.Area_code AS Area_code,
+            da.Area_name AS Area_name,
+            SUM(CASE WHEN ao.Organization_type_code IN (1,2,3,5,6,7,8,9,11,12,13)
+                     THEN ao.Area_organizations_count ELSE 0 END) AS Total_organizations
+        FROM Area_organizations ao
+        JOIN dat_Area da ON da.Area_code = ao.Area_code
+        WHERE ao.deleted = 0
+          AND ao.Year_period = ?
+          AND ao.Area_type_code = ?
+        GROUP BY ao.Area_code, da.Area_name
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$yearPeriod, $areaTypeCode]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}

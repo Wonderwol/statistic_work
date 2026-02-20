@@ -41,6 +41,10 @@
     margin: 0;
     flex: 1 1 320px;
     min-width: 240px;
+
+    /* как во 2 разделе: "Изменения структуры сети ОО" */
+    color: #2c3e50;
+    font-weight: 800;
 }
 
 .page-head__actions{
@@ -133,7 +137,7 @@ body.view-table .dashboard__side{
 
   padding: 12px;
   border-radius: 14px;
-  background: rgba(255,255,255,.96);
+  background: #fff;
 
   /* было */
   border: 1px solid rgba(0,0,0,.08);
@@ -142,7 +146,7 @@ body.view-table .dashboard__side{
   border-top: 4px solid var(--primary-color);
 
   box-shadow: 0 14px 40px rgba(0,0,0,.12);
-  backdrop-filter: blur(6px);
+  backdrop-filter: none;
 }
 
 

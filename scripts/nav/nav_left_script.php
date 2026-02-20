@@ -20,51 +20,48 @@ define('NIMRO_NAV_LEFT_SCRIPT_INCLUDED', true);
   var edge = byId('nimroNavEdge');
   var hotzone = byId('nimroNavHotzone');
 
-  function getHeaderOffsetPx(){
-  var h = 0;
+  function getFixedTopOffsetPx(){
+    var h = 0;
 
-  // 1) Битрикс админ-панель (если есть)
-  var bxPanel = document.getElementById('panel') || document.getElementById('bx-panel');
-  if (bxPanel && bxPanel.getBoundingClientRect) {
-    h += Math.max(0, Math.round(bxPanel.getBoundingClientRect().height || 0));
+    // 1) Битрикс админ-панель (обычно fixed сверху)
+    var bxPanel = document.getElementById('panel') || document.getElementById('bx-panel');
+    if (bxPanel && bxPanel.getBoundingClientRect) {
+      var rect = bxPanel.getBoundingClientRect();
+      // Если реально висит сверху (а не скрыта)
+      if (rect.height > 0 && rect.bottom > 0 && rect.top <= 0) {
+        h += Math.round(rect.height);
+      }
+    }
+
+    // 2) Шапка учитывается ТОЛЬКО если она фиксированная/sticky
+    var header = document.getElementById('header')
+      || document.querySelector('header')
+      || document.querySelector('.site-header')
+      || document.querySelector('.header');
+
+    if (header && header.getBoundingClientRect && window.getComputedStyle) {
+      var cs = getComputedStyle(header);
+      var pos = (cs.position || '').toLowerCase();
+      var top = (cs.top || '');
+      var isFixedLike = (pos === 'fixed') || (pos === 'sticky');
+      var topIsZero = (top === '0px' || top === '0' || top === 'auto');
+
+      if (isFixedLike && topIsZero) {
+        h += Math.round(header.getBoundingClientRect().height || 0);
+      }
+    }
+
+    return Math.max(0, h);
   }
 
-  // 2) Хедер сайта
-  var header = document.getElementById('header') || document.querySelector('header') || document.querySelector('.header');
-  if (header && header.getBoundingClientRect) {
-    h += Math.max(0, Math.round(header.getBoundingClientRect().height || 0));
+  function updateHeaderOffset(){
+    var px = getFixedTopOffsetPx();
+    document.documentElement.style.setProperty('--nimro-header-offset', px + 'px');
   }
 
-  return h;
-}
-
-function getHeaderEl(){
-  return document.getElementById('header')
-    || document.querySelector('header')
-    || document.querySelector('.site-header')
-    || document.querySelector('.header');
-}
-
-function updateHeaderOffset(){
-  var h = 0;
-  var header = getHeaderEl();
-  if (header && header.getBoundingClientRect) {
-    h = Math.max(0, Math.round(header.getBoundingClientRect().height || 0));
-  }
-  document.documentElement.style.setProperty('--nimro-header-offset', h + 'px');
-}
-
-updateHeaderOffset();
-window.addEventListener('resize', updateHeaderOffset, { passive: true });
-
-function updateHeaderOffset(){
-  var px = getHeaderOffsetPx();
-  document.documentElement.style.setProperty('--nimro-header-offset', px + 'px');
-}
-
-updateHeaderOffset();
-window.addEventListener('resize', updateHeaderOffset, { passive: true });
-
+  updateHeaderOffset();
+  window.addEventListener('resize', updateHeaderOffset, { passive: true });
+  window.addEventListener('load', updateHeaderOffset, { passive: true });
 
   if (!nav) return;
 
@@ -74,8 +71,6 @@ window.addEventListener('resize', updateHeaderOffset, { passive: true });
   var isClickOpen = false;
   var closeTimer = 0;
   var hoverEnabled = !!(window.matchMedia && window.matchMedia('(hover:hover) and (pointer:fine)').matches);
-
-  
 
   function setExpanded(v){
     if (openBtn) openBtn.setAttribute('aria-expanded', v ? 'true' : 'false');

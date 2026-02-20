@@ -7,6 +7,48 @@
   width: 100%;
 }
 
+
+/* Chapter1: "Структура по типам" + карточки справа (2 колонки) */
+.chart-container--structure{
+  grid-template-columns: minmax(520px, 2fr) minmax(320px, 1fr);
+  align-items: stretch;
+}
+  @media (max-width: 980px){
+  .chart-container--structure{ grid-template-columns: 1fr; }
+}
+
+/* В правой колонке карточки должны растягиваться по высоте, как и график */
+.chart-container--structure .stats-dock{
+  position: static;
+  right: auto;
+  top: auto;
+  width: auto;
+  max-height: none;
+  z-index: auto;
+  backdrop-filter: none;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* В правой колонке: без внутреннего скролла (чтобы не было "серого фона" и сдвигов) */
+.chart-container--structure .stats-dock{
+  background: #fff;
+}
+
+.chart-container--structure .stats-dock__list{
+  flex: 1 1 auto;
+  min-height: 0;
+
+  /* убираем внутренний скроллбар полностью */
+  overflow: visible;
+  padding-right: 0;
+
+  /* фон области под карточками — белый */
+  background: #fff;
+}
+
 /* Карточка графика */
 .chart-box {
   background: #fff;
@@ -223,4 +265,3 @@
     min-height: 260px;
   }
 }
-

@@ -11,9 +11,16 @@ window.initializeCharts = function () {
 
   const { pieLabels, pieData } = getChartData();
 
-  const BAR_COLORS = [
-    'rgb(91, 57, 62)',
-  ];
+  function cssVar(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name);
+    return (v || '').trim() || fallback;
+  }
+
+  const PRIMARY = cssVar('--primary-color', '#6d444b');     // цвет раздела
+  const BASE_BAR = 'rgb(91, 57, 62)';                       // текущий бар
+  const HOVER_BAR = PRIMARY;    
+
+  const BAR_COLORS = [ BASE_BAR ];
 
   const pairs = pieLabels.map((label, i) => {
     const value = Number(pieData[i] ?? 0);
@@ -27,6 +34,7 @@ window.initializeCharts = function () {
   const values = pairs.map(p => p.value);
 
   const colors = pairs.map((_, i) => BAR_COLORS[i % BAR_COLORS.length]);
+  const hoverColors = pairs.map(() => HOVER_BAR);
   const total = values.reduce((s, v) => s + v, 0);
 
   // Tooltip всегда над курсором (сверху), а не сбоку
@@ -145,7 +153,7 @@ window.initializeCharts = function () {
         label: '',
         data: values,
         backgroundColor: colors,
-        hoverBackgroundColor: colors,
+        hoverBackgroundColor: hoverColors,
         borderColor: 'rgba(80, 60, 60, 0.55)',
         borderWidth: 1.5,
         borderRadius: { topLeft: 0, bottomLeft: 0, topRight: 10, bottomRight: 10 },

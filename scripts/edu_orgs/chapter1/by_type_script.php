@@ -1,5 +1,5 @@
 <?php
-// statistics/scripts/edu_orgs/by_type_script.php
+// statistics/scripts/edu_orgs/chapter1/by_type_script.php
 ?>
 <script>
 (function () {
@@ -10,6 +10,9 @@
 <?php include __DIR__ . '/02_chart_registry.js.php'; ?>
 <?php include __DIR__ . '/03_chart_options.js.php'; ?>
 <?php include __DIR__ . '/04_chart_pie.js.php'; ?>
+<?php include __DIR__ . '/04_chart_area_rank.js.php'; ?>
+<?php include __DIR__ . '/05_export_excel.js.php'; ?>
+<?php include __DIR__ . '/06_views.js.php'; ?>
 <?php include __DIR__ . '/07_filters.js.php'; ?>
 <?php include __DIR__ . '/08_table.js.php'; ?>
 

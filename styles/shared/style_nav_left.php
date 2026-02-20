@@ -11,10 +11,23 @@ define('NIMRO_NAV_LEFT_STYLE_INCLUDED', true);
   --nimro-nav-accent: var(--primary-color, #6d444b);
   --nimro-nav-accent-light: var(--primary-light, #eadee0);
 
+  /* подпись на вертикальной ручке */
+  --nimro-nav-edge-label: "Разделы";
+
   --nimro-nav-edge-w: 46px;
   --nimro-nav-edge-h: 150px;
 
-  --nimro-nav-w: min(420px, 92vw);
+  /*
+    Ширина меню НЕ должна заходить на основную колонку:
+    подстраиваемся под левый “зазор” вокруг центральной колонки (var(--nimro-page-max)),
+    но держим в разумных пределах.
+  */
+  --nimro-nav-w: clamp(
+    220px,
+    calc((100vw - var(--nimro-page-max, 60vw)) / 2 - 12px),
+    320px
+  );
+
   --nimro-nav-border: rgba(0,0,0,.10);
   --nimro-nav-shadow: 0 18px 60px rgba(0,0,0,.20);
   --nimro-nav-text: rgba(44, 62, 80, .92);
@@ -27,7 +40,7 @@ body.nimro-nav-left-open{
 }
 
 /* =========================
-   Ручка слева "Показатели"
+   Ручка слева
    ========================= */
 .nav-left-edge{
   position: fixed;
@@ -58,15 +71,15 @@ body.nimro-nav-left-open{
   width: 28px;
   height: calc(100vh - var(--nimro-header-offset, 0px));
   z-index: 1000;
-  background: rgba(0,0,0,0);
+  background: transparent;
 }
 
 /* Надпись */
 .nav-left-edge::before{
-  content: "Показатели";
+  content: var(--nimro-nav-edge-label, "Разделы");
   position: absolute;
 
-  left: 16px;              /* было 22px — сдвигаем левее, чтобы не наезжало на стрелку */
+  left: 16px;
   top: 50%;
   transform: translate(-50%, -50%) rotate(180deg);
 
@@ -74,11 +87,8 @@ body.nimro-nav-left-open{
   text-orientation: mixed;
 
   font: inherit;
-  font-weight: 600;        /* было 400 */
-  font-size: 15px;         /* было 13px — делаем больше */
-
-  letter-spacing: 0;
-  text-transform: none;
+  font-weight: 600;
+  font-size: 15px;
 
   color: rgba(255,255,255,.96);
   white-space: nowrap;
@@ -90,7 +100,7 @@ body.nimro-nav-left-open{
   content: "";
   position: absolute;
 
-  right: 7px;              /* было 10px — чуть правее к краю, добавляем место тексту */
+  right: 7px;
   top: 50%;
 
   width: 10px;
@@ -104,10 +114,7 @@ body.nimro-nav-left-open{
   pointer-events: none;
 }
 
-
-.nav-left-edge:hover{
-  filter: brightness(0.98);
-}
+.nav-left-edge:hover{ filter: brightness(0.98); }
 .nav-left-edge:hover::after{
   transform: translateX(2px) translateY(-50%) rotate(-45deg);
 }
@@ -118,15 +125,7 @@ body.nimro-nav-left-hover-open .nav-left-edge::after{
   transform: translateY(-50%) rotate(135deg);
 }
 
-/* когда меню открыто — ручку делаем спокойнее */
-body.nimro-nav-left-open .nav-left-edge{
-  box-shadow:
-    6px 0 16px rgba(0,0,0,.12),
-    inset -1px 0 0 rgba(255,255,255,.20);
-  filter: brightness(0.985);
-}
-
-/* На тач-устройствах скрываем */
+/* На тач-устройствах скрываем ручку и hotzone */
 @media (hover:none), (pointer:coarse){
   .nav-left-edge{ display:none; }
   .nav-left-hotzone{ display:none; }
@@ -136,7 +135,7 @@ body.nimro-nav-left-open .nav-left-edge{
 .nav-left-fab{
   position: fixed;
   left: 12px;
-  top: 12px;
+  top: calc(var(--nimro-header-offset, 0px) + 12px);
   z-index: 1002;
 
   display: inline-flex;
@@ -151,6 +150,7 @@ body.nimro-nav-left-open .nav-left-edge{
 
   font-weight: 900;
   font-size: 13px;
+  line-height: 1;
   cursor: pointer;
   box-shadow: 0 10px 26px rgba(0,0,0,.14);
 }
@@ -165,14 +165,16 @@ body.nimro-nav-left-open .nav-left-fab{
   pointer-events: none;
 }
 
-/* ===== BACKDROP ===== */
+/* ===== BACKDROP =====
+   Визуально убираем “затемнение”, но оставляем слой для клика (закрытие меню)
+*/
 .nav-left-backdrop{
   position: fixed;
   left: 0;
   right: 0;
   top: var(--nimro-header-offset, 0px);
   height: calc(100vh - var(--nimro-header-offset, 0px));
-  background: rgba(0,0,0,.35);
+  background: transparent;
   z-index: 1000;
   display: none;
 }
@@ -182,22 +184,23 @@ body.nimro-nav-left-open .nav-left-backdrop{ display: block; }
 .left-navigation{
   position: fixed;
   left: 0;
-  top: 0;                 /* высота на всю страницу */
-  height: 100vh;          /* высота на всю страницу */
+  top: var(--nimro-header-offset, 0px);
+  height: calc(100vh - var(--nimro-header-offset, 0px));
   box-sizing: border-box;
-
-  padding-top: var(--nimro-header-offset, 0px); /* чтобы верх меню не уходил под хедер */
 
   width: var(--nimro-nav-w);
 
-  background: linear-gradient(180deg, rgba(109, 68, 75, .06), #fff 24%, #fff);
+  /* УБРАЛИ rgba/градиент => полностью непрозрачный фон */
+  background: #ffffff;
+
   border-right: 1px solid var(--nimro-nav-border);
   box-shadow: var(--nimro-nav-shadow);
 
   transform: translateX(-110%);
   transition: transform .18s ease;
+  will-change: transform;
 
-  z-index: 4500;          /* ниже хедера (см. пункт 1.2) */
+  z-index: 4500;
 
   display: flex;
   flex-direction: column;
@@ -206,7 +209,7 @@ body.nimro-nav-left-open .nav-left-backdrop{ display: block; }
 
 .left-navigation.is-open{ transform: translateX(0); }
 
-/* верхняя панель */
+/* верхняя панель (без прозрачности) */
 .left-navigation .nav-topbar{
   height: 46px;
   display:flex;
@@ -215,7 +218,7 @@ body.nimro-nav-left-open .nav-left-backdrop{ display: block; }
   gap: 10px;
 
   padding: 0 12px;
-  background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,0)), var(--nimro-nav-accent);
+  background: var(--nimro-nav-accent);
   color: #fff;
   flex: 0 0 auto;
 }
@@ -224,17 +227,19 @@ body.nimro-nav-left-open .nav-left-backdrop{ display: block; }
   font-weight: 900;
   letter-spacing: .2px;
 }
+
+/* кнопка закрытия (без прозрачности) */
 .left-navigation .nav-topbar__close{
   display:inline-flex;
-  border: 1px solid rgba(255,255,255,.35);
-  background: rgba(255,255,255,.10);
-  color: #fff;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #ffffff;
+  color: var(--nimro-nav-accent);
   border-radius: 10px;
   padding: 6px 10px;
   cursor: pointer;
 }
 .left-navigation .nav-topbar__close:hover{
-  background: rgba(255,255,255,.18);
+  filter: brightness(0.96);
 }
 
 /* внутренняя область */
@@ -245,26 +250,27 @@ body.nimro-nav-left-open .nav-left-backdrop{ display: block; }
   flex: 1 1 auto;
 
   scrollbar-width: thin;
-  scrollbar-color: rgba(109, 68, 75, .45) rgba(0,0,0,0);
+  scrollbar-color: rgba(109, 68, 75, .45) transparent;
 }
 
 .left-navigation .nav-panel::-webkit-scrollbar{ width: 10px; }
-.left-navigation .nav-panel::-webkit-scrollbar-track{ background: rgba(0,0,0,0); }
+.left-navigation .nav-panel::-webkit-scrollbar-track{ background: transparent; }
 .left-navigation .nav-panel::-webkit-scrollbar-thumb{
   background: rgba(109, 68, 75, .35);
   border-radius: 10px;
-  border: 2px solid rgba(0,0,0,0);
+  border: 2px solid transparent;
   background-clip: padding-box;
 }
 
-/* секции */
+/* секции (без прозрачности) */
 .left-navigation details.nav-section{
-  margin: 10px 4px;
+  margin: 10px 0;
   border: 1px solid rgba(0,0,0,.06);
   border-radius: 12px;
-  background: rgba(255,255,255,.85);
+  background: #ffffff;
   overflow: hidden;
 }
+
 .left-navigation details.nav-section > summary{
   list-style: none;
   cursor: pointer;
@@ -278,19 +284,22 @@ body.nimro-nav-left-open .nav-left-backdrop{ display: block; }
   padding: 10px 10px;
   font-weight: 900;
   font-size: 13px;
-  color: rgba(109, 68, 75, .90);
-  text-transform: none;
+  color: rgba(109, 68, 75, .92);
   letter-spacing: .15px;
 }
-.left-navigation details.nav-section > summary:hover{
-  background: rgba(109, 68, 75, .06);
-}
 .left-navigation details.nav-section > summary::-webkit-details-marker{ display:none; }
+
+/* hover — тоже без rgba */
+.left-navigation details.nav-section > summary:hover{
+  background: #f7f2f3;
+}
+
 .left-navigation details.nav-section > summary::after{
   content:"▾";
   font-size: 14px;
   line-height: 1;
   color: rgba(109, 68, 75, .95);
+  display: inline-block;
   transform: rotate(-90deg);
   transition: transform .15s ease;
 }
@@ -322,19 +331,24 @@ body.nimro-nav-left-open .nav-left-backdrop{ display: block; }
   border: 1px solid transparent;
   transition: background-color .15s ease, border-color .15s ease, transform .12s ease;
 }
+
 .left-navigation .nav-menu a:focus-visible{
   outline: 3px solid rgba(109, 68, 75, .28);
   outline-offset: 2px;
 }
+
+/* hover — без прозрачности */
 .left-navigation .nav-menu a:hover{
-  background: rgba(109, 68, 75, .08);
-  border-color: rgba(109, 68, 75, .18);
+  background: #f4edef;
+  border-color: #e7d2d6;
 }
+
 .left-navigation .nav-menu a:active{ transform: translateY(1px); }
 
+/* active — без прозрачности */
 .left-navigation .nav-menu a.active{
-  background: rgba(109, 68, 75, 0.14);
-  border-color: rgba(109, 68, 75, 0.28);
+  background: #efe2e4;
+  border-color: #e2c8cd;
   font-weight: 900;
 }
 .left-navigation .nav-menu a.active::before{
@@ -370,11 +384,18 @@ body.nimro-nav-left-open .nav-left-backdrop{ display: block; }
   color: var(--nimro-nav-accent);
   font-weight: 900;
   line-height: 1;
+
+  margin-top: 1px;
+}
+
+.left-navigation .nav-menu .nav-ico svg{
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 .left-navigation .nav-menu a.active .nav-ico{
   background: var(--nimro-nav-accent);
   border-color: rgba(0,0,0,.08);
   color: #fff;
 }
-
 </style>
